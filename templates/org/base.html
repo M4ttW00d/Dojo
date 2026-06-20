@@ -31,7 +31,7 @@
                     </li>
                 </ul>
 
-                {% if request.user.is_superuser or org_membership.role == 'org_admin' %}
+                {% if request.user.is_superuser or org_membership and org_membership.role == 'org_admin' %}
                 <p class="nav-label text-uppercase text-secondary small px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: .08em;">Club</p>
                 <ul class="nav flex-column">
                     <li class="nav-item">

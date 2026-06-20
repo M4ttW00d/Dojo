@@ -1,0 +1,48 @@
+{% extends 'org/base.html' %}
+
+{% block title %}Dashboard — {{ org.name }}{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ request.user.get_full_name|default:request.user.username }}{% endblock %}
+
+{% block main_content %}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <i class="bi bi-people fs-2 text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="fs-3 fw-bold">{{ member_count }}</div>
+                        <div class="text-muted small">Active members</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <i class="bi bi-calendar-week fs-2 text-success"></i>
+                    </div>
+                    <div>
+                        <div class="fs-3 fw-bold">{{ class_count }}</div>
+                        <div class="text-muted small">Classes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-hammer fs-1 d-block mb-2"></i>
+        More to come — members, classes, and billing views are next.
+    </div>
+</div>
+{% endblock %}
