@@ -1,0 +1,83 @@
+{% extends 'org/base.html' %}
+
+{% block title %}Members — {{ org.name }}{% endblock %}
+
+{% block page_title %}Members{% endblock %}
+{% block page_subtitle %}{{ org.club_members.count }} total members{% endblock %}
+
+{% block page_actions %}
+<a href="#" class="btn btn-dark btn-sm">
+    <i class="bi bi-plus-lg me-1"></i> Add member
+</a>
+{% endblock %}
+
+{% block main_content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3">
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+
+            <input type="search"
+                   class="form-control form-control-sm"
+                   style="max-width: 280px;"
+                   placeholder="Search name, email, phone…"
+                   value="{{ q }}"
+                   name="q"
+                   hx-get="{% url 'member_list' org_slug=org.slug %}"
+                   hx-trigger="keyup changed delay:300ms, search"
+                   hx-target="#member-tbody"
+                   hx-include="[name='show']">
+
+            <div class="btn-group btn-group-sm ms-auto" role="group">
+                <a href="?show=active{% if q %}&q={{ q }}{% endif %}"
+                   class="btn {% if show == 'active' %}btn-dark{% else %}btn-outline-secondary{% endif %}">Active</a>
+                <a href="?show=inactive{% if q %}&q={{ q }}{% endif %}"
+                   class="btn {% if show == 'inactive' %}btn-dark{% else %}btn-outline-secondary{% endif %}">Inactive</a>
+                <a href="?show=all{% if q %}&q={{ q }}{% endif %}"
+                   class="btn {% if show == 'all' %}btn-dark{% else %}btn-outline-secondary{% endif %}">All</a>
+            </div>
+
+            <input type="hidden" name="show" value="{{ show }}">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Joined</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="member-tbody">
+                {% include 'members/partials/member_rows.html' %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="card-footer bg-white border-top py-2">
+        <nav>
+            <ul class="pagination pagination-sm mb-0 justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}&show={{ show }}">Previous</a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}&show={{ show }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

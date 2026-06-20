@@ -1,0 +1,24 @@
+{% for member in members %}
+<tr>
+    <td>
+        <a href="#" class="text-decoration-none fw-semibold">{{ member.name }}</a>
+    </td>
+    <td class="text-muted">{{ member.email|default:"—" }}</td>
+    <td class="text-muted">{{ member.phone|default:"—" }}</td>
+    <td class="text-muted">{{ member.joined_date|date:"d M Y"|default:"—" }}</td>
+    <td>
+        {% if member.is_active %}
+        <span class="badge bg-success-subtle text-success">Active</span>
+        {% else %}
+        <span class="badge bg-secondary-subtle text-secondary">Inactive</span>
+        {% endif %}
+    </td>
+    <td class="text-end">
+        <a href="#" class="btn btn-sm btn-outline-secondary">View</a>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="6" class="text-center text-muted py-4">No members found.</td>
+</tr>
+{% endfor %}
