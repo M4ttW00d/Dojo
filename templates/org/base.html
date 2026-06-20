@@ -13,7 +13,10 @@
     </button>
     <div class="d-none d-md-flex align-items-center ms-auto pe-3 gap-3">
         <span class="text-white-50 small">{{ request.user.get_full_name|default:request.user.username }}</span>
-        <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm text-white border-secondary">Log out</a>
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm text-white border-secondary">Log out</button>
+        </form>
     </div>
 </header>
 
@@ -82,7 +85,10 @@
 
                 <div class="d-md-none border-top border-secondary mt-3 pt-3 px-3 pb-3">
                     <span class="text-white-50 small d-block mb-2">{{ request.user.get_full_name|default:request.user.username }}</span>
-                    <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm text-white border-secondary w-100">Log out</a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-secondary btn-sm text-white border-secondary w-100">Log out</button>
+                    </form>
                 </div>
             </div>
         </nav>
