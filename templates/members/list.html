@@ -6,7 +6,7 @@
 {% block page_subtitle %}{{ org.club_members.count }} total members{% endblock %}
 
 {% block page_actions %}
-<a href="#" class="btn btn-dark btn-sm">
+<a href="{% url 'member_add' org_slug=org.slug %}" class="btn btn-dark btn-sm">
     <i class="bi bi-plus-lg me-1"></i> Add member
 </a>
 {% endblock %}

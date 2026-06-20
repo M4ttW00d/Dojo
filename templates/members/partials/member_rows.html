@@ -1,11 +1,33 @@
 {% for member in members %}
+{% with guardian=member.guardians.all.0 %}
 <tr>
     <td>
         <a href="#" class="text-decoration-none fw-semibold">{{ member.name }}</a>
+        {% if guardian %}
+        <div class="text-muted small">via {{ guardian.name }}{% if guardian.relationship %} ({{ guardian.relationship }}){% endif %}</div>
+        {% endif %}
     </td>
-    <td class="text-muted">{{ member.email|default:"—" }}</td>
-    <td class="text-muted">{{ member.phone|default:"—" }}</td>
-    <td class="text-muted">{{ member.joined_date|date:"d M Y"|default:"—" }}</td>
+    <td class="text-muted small">
+        {% if member.email %}
+            {{ member.email }}
+        {% elif guardian and guardian.email %}
+            {{ guardian.email }}
+            <span class="badge bg-light text-secondary border ms-1" style="font-size: 0.65rem;">guardian</span>
+        {% else %}
+            —
+        {% endif %}
+    </td>
+    <td class="text-muted small">
+        {% if member.phone %}
+            {{ member.phone }}
+        {% elif guardian and guardian.phone %}
+            {{ guardian.phone }}
+            <span class="badge bg-light text-secondary border ms-1" style="font-size: 0.65rem;">guardian</span>
+        {% else %}
+            —
+        {% endif %}
+    </td>
+    <td class="text-muted small">{{ member.joined_date|date:"d M Y"|default:"—" }}</td>
     <td>
         {% if member.is_active %}
         <span class="badge bg-success-subtle text-success">Active</span>
@@ -17,6 +39,7 @@
         <a href="#" class="btn btn-sm btn-outline-secondary">View</a>
     </td>
 </tr>
+{% endwith %}
 {% empty %}
 <tr>
     <td colspan="6" class="text-center text-muted py-4">No members found.</td>
