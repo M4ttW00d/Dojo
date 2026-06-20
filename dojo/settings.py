@@ -22,6 +22,8 @@ INSTALLED_APPS = [
     'organisations',
     'members',
     'classes',
+    'progression',
+    'billing',
 ]
 
 MIDDLEWARE = [
