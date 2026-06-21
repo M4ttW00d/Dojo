@@ -93,6 +93,12 @@ class MemberDetailView(OrgAdminMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['guardians'] = self.object.guardians.all()
         context['invoices'] = self.object.invoices.order_by('-created_at')[:5]
+        from classes.models import ClassMember
+        context['enrolments'] = (
+            ClassMember.objects.filter(member=self.object)
+            .select_related('assigned_class')
+            .order_by('assigned_class__name')
+        )
         from progression.models import MemberProgression, ProgressionStage, ProgressionSystem
         context['progressions'] = MemberProgression.objects.filter(
             member=self.object

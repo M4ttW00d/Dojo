@@ -263,9 +263,22 @@
             <div class="card-header bg-white border-bottom py-3">
                 <h6 class="mb-0">Classes</h6>
             </div>
-            <div class="card-body">
-                <p class="text-muted small mb-0">No classes assigned yet.</p>
+            {% if enrolments %}
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for enrolment in enrolments %}
+                    <li class="list-group-item py-2 px-3">
+                        <div class="small fw-semibold">{{ enrolment.assigned_class.name }}</div>
+                        <div class="small text-muted">{{ enrolment.assigned_class.schedule_display }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
+            {% else %}
+            <div class="card-body">
+                <p class="text-muted small mb-0">Not enrolled in any classes.</p>
+            </div>
+            {% endif %}
         </div>
 
         <div class="card border-0 shadow-sm mb-3">
@@ -300,6 +313,79 @@
             {% else %}
             <div class="card-body">
                 <p class="text-muted small mb-0">No invoices yet.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Documents</h6>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#upload-doc-form">
+                    <i class="bi bi-upload me-1"></i> Upload
+                </button>
+            </div>
+            <div class="collapse" id="upload-doc-form">
+                <div class="card-body border-bottom bg-light">
+                    <form method="post" action="{% url 'document_upload' org_slug=org.slug member_pk=member.pk %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-sm-4">
+                                <label class="form-label small fw-semibold">Name</label>
+                                <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Consent Form 2024">
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label small fw-semibold">Category</label>
+                                <select name="category" class="form-select form-select-sm">
+                                    <option value="consent">Consent form</option>
+                                    <option value="medical">Medical</option>
+                                    <option value="waiver">Waiver</option>
+                                    <option value="membership">Membership agreement</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-5">
+                                <label class="form-label small fw-semibold">File</label>
+                                <input type="file" name="file" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-sm btn-dark">Upload</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% if member.documents.all %}
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for doc in member.documents.all %}
+                        <tr>
+                            <td class="ps-3 py-2 small fw-semibold">{{ doc.name }}</td>
+                            <td class="py-2 small text-muted">{{ doc.get_category_display }}</td>
+                            <td class="py-2 small text-muted">{{ doc.uploaded_at|date:"d M Y" }}</td>
+                            <td class="py-2 text-end pe-3">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="{% url 'document_download' org_slug=org.slug member_pk=member.pk pk=doc.pk %}"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    <form method="post" action="{% url 'document_delete' org_slug=org.slug member_pk=member.pk pk=doc.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Delete this document?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body">
+                <p class="text-muted small mb-0">No documents uploaded yet.</p>
             </div>
             {% endif %}
         </div>

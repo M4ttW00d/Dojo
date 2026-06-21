@@ -145,6 +145,44 @@
     </div>
     {% endif %}
 
+    {% if enrolments %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+            <h6 class="mb-0">Classes</h6>
+        </div>
+        <div class="card-body p-0">
+            <ul class="list-group list-group-flush">
+                {% for enrolment in enrolments %}
+                <li class="list-group-item py-2 px-3">
+                    <div class="small fw-semibold">{{ enrolment.assigned_class.name }}</div>
+                    <div class="small text-muted">{{ enrolment.assigned_class.schedule_display }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if recent_attendance %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+            <h6 class="mb-0">Recent attendance</h6>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <tbody>
+                    {% for att in recent_attendance %}
+                    <tr>
+                        <td class="ps-3 py-2 small">{{ att.session.date|date:"d M Y" }}</td>
+                        <td class="py-2 small text-muted pe-3">{{ att.session.assigned_class.name }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
     {% if paid %}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom py-3">

@@ -27,6 +27,18 @@ class PortalView(View):
         )
         current_grade = progressions.first()
 
+        from classes.models import Attendance, ClassMember
+        enrolments = (
+            ClassMember.objects.filter(member=member)
+            .select_related('assigned_class')
+            .order_by('assigned_class__name')
+        )
+        recent_attendance = (
+            Attendance.objects.filter(member=member, present=True)
+            .select_related('session__assigned_class')
+            .order_by('-session__date')[:10]
+        )
+
         outstanding_total = sum(inv.amount for inv in outstanding)
 
         stripe_enabled = bool(settings.STRIPE_PUBLIC_KEY and settings.STRIPE_SECRET_KEY)
@@ -42,6 +54,8 @@ class PortalView(View):
             'progressions': progressions,
             'outstanding_total': outstanding_total,
             'stripe_enabled': stripe_enabled,
+            'enrolments': enrolments,
+            'recent_attendance': recent_attendance,
         })
 
 

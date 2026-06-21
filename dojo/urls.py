@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
@@ -27,4 +29,5 @@ urlpatterns = [
     path('org/<slug:org_slug>/', include('organisations.urls')),
     path('p/<str:token>/', include('members.portal_urls')),
     path('stripe/', include('billing.stripe_urls')),
-]
+    path('org/<slug:org_slug>/', include('documents.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
