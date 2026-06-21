@@ -69,6 +69,14 @@
                             {{ form.phone }}
                             {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>{% endif %}
                         </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small">
+                                <i class="bi bi-heart-pulse text-danger me-1"></i>Medical info
+                            </label>
+                            {{ form.medical_info }}
+                            <div class="form-text">Conditions, allergies, or anything coaches must know. Shown on the attendance register.</div>
+                            {% if form.medical_info.errors %}<div class="text-danger small mt-1">{{ form.medical_info.errors.0 }}</div>{% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

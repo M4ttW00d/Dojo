@@ -58,6 +58,7 @@ class SignupView(View):
             guardian_name=request.POST.get('guardian_name', '').strip(),
             guardian_email=request.POST.get('guardian_email', '').strip(),
             guardian_phone=request.POST.get('guardian_phone', '').strip(),
+            medical_info=request.POST.get('medical_info', '').strip(),
             notes=request.POST.get('notes', '').strip(),
             signature_data=signature_data,
         )

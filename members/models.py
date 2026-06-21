@@ -28,6 +28,7 @@ class Member(models.Model):
     subscription_status = models.CharField(max_length=20, blank=True)
     licence_number = models.CharField(max_length=100, blank=True)
     licence_expiry = models.DateField(null=True, blank=True)
+    medical_info = models.TextField(blank=True, help_text='Medical conditions, allergies, or other health information coaches should know about')
 
     @property
     def has_active_subscription(self):
@@ -90,6 +91,7 @@ class MemberApplication(models.Model):
     guardian_name = models.CharField(max_length=255, blank=True)
     guardian_email = models.EmailField(blank=True)
     guardian_phone = models.CharField(max_length=20, blank=True)
+    medical_info = models.TextField(blank=True)
     notes = models.TextField(blank=True, help_text='Any additional information from the applicant')
     signature_data = models.TextField(blank=True, help_text='Base64-encoded PNG of drawn signature')
     submitted_at = models.DateTimeField(auto_now_add=True)

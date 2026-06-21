@@ -56,6 +56,7 @@ class MemberForm(forms.ModelForm):
             'emergency_contact_2_name', 'emergency_contact_2_phone',
             'joined_date', 'is_active', 'monthly_fee',
             'licence_number', 'licence_expiry',
+            'medical_info',
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
