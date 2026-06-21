@@ -3,6 +3,7 @@ import stripe
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -49,6 +50,7 @@ class StripeWebhookView(View):
                             method='Stripe',
                             stripe_payment_id=getattr(session, 'payment_intent', ''),
                             notes=f"Stripe Checkout session {session.id}",
+                            paid_at=timezone.now(),
                         )
                         invoice.status = 'paid'
                         invoice.save(update_fields=['status'])
