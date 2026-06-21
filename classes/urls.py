@@ -1,0 +1,13 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.ClassListView.as_view(), name='class_list'),
+    path('add/', views.ClassCreateView.as_view(), name='class_add'),
+    path('<int:pk>/', views.ClassDetailView.as_view(), name='class_detail'),
+    path('<int:pk>/edit/', views.ClassUpdateView.as_view(), name='class_edit'),
+    path('<int:pk>/enrol/', views.EnrolMemberView.as_view(), name='class_enrol'),
+    path('<int:pk>/unenrol/<int:member_pk>/', views.UnenrolMemberView.as_view(), name='class_unenrol'),
+    path('<int:pk>/generate-sessions/', views.GenerateSessionsView.as_view(), name='class_generate_sessions'),
+    path('<int:pk>/sessions/<int:session_pk>/register/', views.AttendanceRegisterView.as_view(), name='session_register'),
+]
