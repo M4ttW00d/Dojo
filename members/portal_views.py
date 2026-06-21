@@ -161,6 +161,28 @@ class CreateSubscriptionView(View):
         return redirect(session.url)
 
 
+class BillingPortalView(View):
+    def post(self, request, token):
+        import stripe
+
+        member = get_object_or_404(Member, token=token, is_active=True)
+
+        if not member.stripe_customer_id or not settings.STRIPE_SECRET_KEY:
+            return redirect('member_portal', token=token)
+
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+
+        site_url = settings.SITE_URL.rstrip('/')
+        portal_url = f"{site_url}/p/{token}/"
+
+        session = stripe.billing_portal.Session.create(
+            customer=member.stripe_customer_id,
+            return_url=portal_url,
+        )
+
+        return redirect(session.url)
+
+
 class CancelSubscriptionView(View):
     def post(self, request, token):
         import stripe

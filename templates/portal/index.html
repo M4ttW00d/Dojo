@@ -59,15 +59,23 @@
             </div>
             <div class="flex-shrink-0">
                 {% if member.has_active_subscription or member.subscription_status == 'cancelling' %}
-                {% if not member.subscription_status == 'cancelling' %}
-                <form method="post" action="/p/{{ member.token }}/cancel-subscription/">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                            onclick="return confirm('Cancel autopay at the end of this billing period?')">
-                        Cancel autopay
-                    </button>
-                </form>
-                {% endif %}
+                <div class="d-flex flex-column gap-2">
+                    <form method="post" action="/p/{{ member.token }}/billing-portal/">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
+                            Manage payment method
+                        </button>
+                    </form>
+                    {% if not member.subscription_status == 'cancelling' %}
+                    <form method="post" action="/p/{{ member.token }}/cancel-subscription/">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger w-100"
+                                onclick="return confirm('Cancel autopay at the end of this billing period?')">
+                            Cancel autopay
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
                 {% else %}
                 <form method="post" action="/p/{{ member.token }}/subscribe/">
                     {% csrf_token %}
