@@ -18,7 +18,14 @@
 {% if request.GET.paid %}
 <div style="background:#d1fae5;border-bottom:1px solid #6ee7b7;padding:12px 0;text-align:center;">
     <span style="color:#065f46;font-weight:600;font-size:14px;">
-        ✓ Payment received — thank you!
+        Payment received — thank you!
+    </span>
+</div>
+{% endif %}
+{% if request.GET.subscribed %}
+<div style="background:#d1fae5;border-bottom:1px solid #6ee7b7;padding:12px 0;text-align:center;">
+    <span style="color:#065f46;font-weight:600;font-size:14px;">
+        Autopay set up — you'll be charged £{{ member.monthly_fee|floatformat:2 }} each month.
     </span>
 </div>
 {% endif %}
@@ -31,6 +38,48 @@
 </header>
 
 <div class="container pb-5" style="max-width: 680px;">
+
+    {% if subscription_enabled %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3 flex-wrap">
+            <div>
+                {% if member.has_active_subscription %}
+                <p class="fw-semibold mb-0"><i class="bi bi-check-circle-fill text-success me-1"></i> Autopay active</p>
+                <p class="text-muted small mb-0">£{{ member.monthly_fee|floatformat:2 }}/month — card charged automatically each month.</p>
+                {% elif member.subscription_status == 'cancelling' %}
+                <p class="fw-semibold mb-0"><i class="bi bi-clock text-warning me-1"></i> Autopay cancelling</p>
+                <p class="text-muted small mb-0">Your subscription will end at the close of the current billing period.</p>
+                {% elif member.subscription_status == 'past_due' %}
+                <p class="fw-semibold mb-0"><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> Autopay payment failed</p>
+                <p class="text-muted small mb-0">Your last payment didn't go through. Please update your payment details.</p>
+                {% else %}
+                <p class="fw-semibold mb-0">Set up autopay</p>
+                <p class="text-muted small mb-0">Pay £{{ member.monthly_fee|floatformat:2 }}/month automatically — no more manual invoices.</p>
+                {% endif %}
+            </div>
+            <div class="flex-shrink-0">
+                {% if member.has_active_subscription or member.subscription_status == 'cancelling' %}
+                {% if not member.subscription_status == 'cancelling' %}
+                <form method="post" action="/p/{{ member.token }}/cancel-subscription/">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Cancel autopay at the end of this billing period?')">
+                        Cancel autopay
+                    </button>
+                </form>
+                {% endif %}
+                {% else %}
+                <form method="post" action="/p/{{ member.token }}/subscribe/">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-dark btn-sm">
+                        Set up autopay £{{ member.monthly_fee|floatformat:2 }}/month
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     {% if outstanding %}
     <div class="card border-0 shadow-sm mb-4">

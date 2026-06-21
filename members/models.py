@@ -21,6 +21,14 @@ class Member(models.Model):
     token = models.CharField(max_length=64, unique=True, default=generate_token)
     joined_date = models.DateField(null=True, blank=True)
     custom_field_values = models.JSONField(default=dict, blank=True)
+    monthly_fee = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True)
+    stripe_subscription_id = models.CharField(max_length=255, blank=True)
+    subscription_status = models.CharField(max_length=20, blank=True)
+
+    @property
+    def has_active_subscription(self):
+        return self.subscription_status == 'active'
 
     def __str__(self):
         return self.name

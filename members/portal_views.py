@@ -42,6 +42,7 @@ class PortalView(View):
         outstanding_total = sum(inv.amount for inv in outstanding)
 
         stripe_enabled = bool(settings.STRIPE_PUBLIC_KEY and settings.STRIPE_SECRET_KEY)
+        subscription_enabled = stripe_enabled and bool(member.monthly_fee)
 
         return render(request, 'portal/index.html', {
             'member': member,
@@ -54,6 +55,7 @@ class PortalView(View):
             'progressions': progressions,
             'outstanding_total': outstanding_total,
             'stripe_enabled': stripe_enabled,
+            'subscription_enabled': subscription_enabled,
             'enrolments': enrolments,
             'recent_attendance': recent_attendance,
         })
@@ -99,3 +101,81 @@ class CreateCheckoutView(View):
         )
 
         return redirect(session.url)
+
+
+class CreateSubscriptionView(View):
+    def post(self, request, token):
+        import stripe
+
+        member = get_object_or_404(Member, token=token, is_active=True)
+
+        if not (settings.STRIPE_PUBLIC_KEY and settings.STRIPE_SECRET_KEY):
+            return redirect('member_portal', token=token)
+        if not member.monthly_fee:
+            return redirect('member_portal', token=token)
+
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+
+        site_url = settings.SITE_URL.rstrip('/')
+        portal_url = f"{site_url}/p/{token}/"
+
+        # Create or reuse Stripe Customer
+        if member.stripe_customer_id:
+            customer_id = member.stripe_customer_id
+        else:
+            customer_email = (
+                member.guardians.filter(email__gt='').first().email
+                if member.guardians.exists()
+                else member.email or None
+            )
+            customer = stripe.Customer.create(
+                email=customer_email,
+                name=member.name,
+                metadata={'member_pk': str(member.pk)},
+            )
+            member.stripe_customer_id = customer.id
+            member.save(update_fields=['stripe_customer_id'])
+            customer_id = customer.id
+
+        session = stripe.checkout.Session.create(
+            customer=customer_id,
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'gbp',
+                    'unit_amount': int(member.monthly_fee * 100),
+                    'product_data': {
+                        'name': f"{member.organisation.name} — Monthly membership",
+                        'description': f"Monthly membership for {member.name}",
+                    },
+                    'recurring': {'interval': 'month'},
+                },
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=portal_url + '?subscribed=1',
+            cancel_url=portal_url,
+            metadata={'member_pk': str(member.pk)},
+        )
+
+        return redirect(session.url)
+
+
+class CancelSubscriptionView(View):
+    def post(self, request, token):
+        import stripe
+
+        member = get_object_or_404(Member, token=token, is_active=True)
+
+        if not member.stripe_subscription_id:
+            return redirect('member_portal', token=token)
+
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        stripe.Subscription.modify(
+            member.stripe_subscription_id,
+            cancel_at_period_end=True,
+        )
+        member.subscription_status = 'cancelling'
+        member.save(update_fields=['subscription_status'])
+
+        return redirect('member_portal', token=token)

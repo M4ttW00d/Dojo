@@ -44,6 +44,12 @@
                             {% if form.joined_date.errors %}<div class="text-danger small mt-1">{{ form.joined_date.errors.0 }}</div>{% endif %}
                         </div>
                         <div class="col-sm-6">
+                            <label class="form-label fw-semibold small">Monthly fee (£)</label>
+                            {{ form.monthly_fee }}
+                            {% if form.monthly_fee.errors %}<div class="text-danger small mt-1">{{ form.monthly_fee.errors.0 }}</div>{% endif %}
+                            <div class="form-text">Used for autopay subscriptions. Leave blank if not applicable.</div>
+                        </div>
+                        <div class="col-sm-6">
                             <label class="form-label fw-semibold small">Email</label>
                             {{ form.email }}
                             {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
