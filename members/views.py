@@ -197,6 +197,43 @@ class DeleteProgressionView(OrgAdminMixin, View):
         return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
 
 
+class MemberExportView(OrgAdminMixin, View):
+    def get(self, request, org_slug):
+        import csv
+        from django.http import HttpResponse
+        members = (
+            Member.objects.filter(organisation=self.org)
+            .prefetch_related('guardians', 'enrolments__assigned_class')
+            .order_by('name')
+        )
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{self.org.slug}-members.csv"'
+        writer = csv.writer(response)
+        writer.writerow([
+            'Name', 'Date of birth', 'Email', 'Phone',
+            'Joined date', 'Active', 'Monthly fee',
+            'Guardian name', 'Guardian email', 'Guardian phone',
+            'Classes',
+        ])
+        for m in members:
+            guardian = m.guardians.first()
+            classes = ', '.join(e.assigned_class.name for e in m.enrolments.all())
+            writer.writerow([
+                m.name,
+                m.date_of_birth.isoformat() if m.date_of_birth else '',
+                m.email,
+                m.phone,
+                m.joined_date.isoformat() if m.joined_date else '',
+                'Yes' if m.is_active else 'No',
+                str(m.monthly_fee) if m.monthly_fee else '',
+                guardian.name if guardian else '',
+                guardian.email if guardian else '',
+                guardian.phone if guardian else '',
+                classes,
+            ])
+        return response
+
+
 class MemberImportView(OrgAdminMixin, View):
     template_name = 'members/import.html'
 

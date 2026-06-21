@@ -302,6 +302,79 @@ class RemoveCoachView(OrgAdminMixin, View):
         return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
 
 
+class CancelSessionView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk, session_pk):
+        cls = get_object_or_404(Class, pk=pk, organisation=self.org)
+        session = get_object_or_404(Session, pk=session_pk, assigned_class=cls)
+        notify = request.POST.get('notify') == '1'
+
+        was_cancelled = session.is_cancelled
+        session.is_cancelled = not was_cancelled
+        session.save(update_fields=['is_cancelled'])
+
+        if session.is_cancelled:
+            messages.success(request, f'Session on {session.date} marked as cancelled.')
+            if notify:
+                self._send_cancellation_emails(request, cls, session)
+        else:
+            messages.success(request, f'Session on {session.date} reinstated.')
+
+        return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
+
+    def _send_cancellation_emails(self, request, cls, session):
+        from django.core.mail import EmailMultiAlternatives
+        from django.template.loader import render_to_string
+
+        enrolled = (
+            ClassMember.objects.filter(assigned_class=cls)
+            .select_related('member')
+            .prefetch_related('member__guardians')
+        )
+        sent = 0
+        for cm in enrolled:
+            member = cm.member
+            has_guardians = member.guardians.exists()
+            if has_guardians:
+                guardian = member.guardians.filter(email__gt='').first()
+                recipient = guardian.email if guardian else None
+            else:
+                recipient = member.email or None
+
+            if not recipient:
+                continue
+
+            org_name = self.org.name
+            subject = f'{org_name} — {cls.name} session cancelled ({session.date.strftime("%d %b %Y")})'
+            context = {
+                'org_name': org_name,
+                'class_name': cls.name,
+                'session': session,
+                'member': member,
+                'has_guardians': has_guardians,
+            }
+            html_body = render_to_string('emails/session_cancelled.html', context)
+            text_body = (
+                f"{'Hi' if not has_guardians else 'Dear guardian of'} {member.name},\n\n"
+                f"This is to let you know that the {cls.name} session on "
+                f"{session.date.strftime('%d %b %Y')} has been cancelled.\n\n"
+                f"— {org_name}"
+            )
+            msg = EmailMultiAlternatives(
+                subject=subject, body=text_body,
+                from_email=self.org.email or None,
+                to=[recipient],
+            )
+            msg.attach_alternative(html_body, 'text/html')
+            try:
+                msg.send()
+                sent += 1
+            except Exception:
+                pass
+
+        if sent:
+            messages.success(request, f'Cancellation notice sent to {sent} member{"s" if sent != 1 else ""}.')
+
+
 class AttendanceAnalyticsView(OrgAdminMixin, View):
     template_name = 'classes/attendance_analytics.html'
 

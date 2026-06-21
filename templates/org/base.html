@@ -26,9 +26,11 @@
         <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse" style="min-height: calc(100vh - 56px);">
             <div class="position-sticky pt-3">
 
+                {% with url_name=request.resolver_match.url_name %}
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 px-3 py-2" href="{% url 'org_dashboard' org_slug=org.slug %}">
+                        <a class="nav-link px-3 py-2 {% if url_name == 'org_dashboard' %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'org_dashboard' org_slug=org.slug %}">
                             <i class="bi bi-speedometer2 me-2"></i> Dashboard
                         </a>
                     </li>
@@ -38,18 +40,27 @@
                 <p class="nav-label text-uppercase text-secondary small px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: .08em;">Club</p>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 px-3 py-2" href="{% url 'member_list' org_slug=org.slug %}">
+                        <a class="nav-link px-3 py-2 {% if 'member' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'member_list' org_slug=org.slug %}">
                             <i class="bi bi-people me-2"></i> Members
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 px-3 py-2" href="{% url 'class_list' org_slug=org.slug %}">
+                        <a class="nav-link px-3 py-2 {% if 'class' in url_name or 'session' in url_name or 'coach_class' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'class_list' org_slug=org.slug %}">
                             <i class="bi bi-calendar-week me-2"></i> Classes
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 px-3 py-2" href="{% url 'invoice_list' org_slug=org.slug %}">
+                        <a class="nav-link px-3 py-2 {% if 'invoice' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'invoice_list' org_slug=org.slug %}">
                             <i class="bi bi-receipt me-2"></i> Billing
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 {% if 'attendance' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'attendance_analytics' org_slug=org.slug %}">
+                            <i class="bi bi-bar-chart me-2"></i> Attendance
                         </a>
                     </li>
                 </ul>
@@ -57,36 +68,54 @@
                 <p class="nav-label text-uppercase text-secondary small px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: .08em;">Settings</p>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 px-3 py-2" href="{% url 'org_custom_fields' org_slug=org.slug %}">
-                            <i class="bi bi-tags me-2"></i> Custom Fields
+                        <a class="nav-link px-3 py-2 {% if url_name == 'org_settings' %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'org_settings' org_slug=org.slug %}">
+                            <i class="bi bi-gear me-2"></i> General
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 px-3 py-2" href="{% url 'progression_settings' org_slug=org.slug %}">
+                        <a class="nav-link px-3 py-2 {% if url_name == 'org_custom_fields' %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'org_custom_fields' org_slug=org.slug %}">
+                            <i class="bi bi-tags me-2"></i> Custom fields
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 {% if 'progression' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'progression_settings' org_slug=org.slug %}">
                             <i class="bi bi-award me-2"></i> Progression
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 px-3 py-2" href="{% url 'org_staff' org_slug=org.slug %}">
-                            <i class="bi bi-person-badge me-2"></i> Coaches
+                        <a class="nav-link px-3 py-2 {% if url_name == 'org_staff' %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'org_staff' org_slug=org.slug %}">
+                            <i class="bi bi-person-badge me-2"></i> Staff
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 px-3 py-2" href="{% url 'org_audit_log' org_slug=org.slug %}">
+                        <a class="nav-link px-3 py-2 {% if url_name == 'org_audit_log' %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'org_audit_log' org_slug=org.slug %}">
                             <i class="bi bi-journal-check me-2"></i> Audit log
                         </a>
                     </li>
                 </ul>
                 {% else %}
-                <p class="nav-label text-uppercase text-secondary small px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: .08em;">My Classes</p>
+                <p class="nav-label text-uppercase text-secondary small px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: .08em;">My classes</p>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link text-white-50 px-3 py-2" href="{% url 'coach_class_list' org_slug=org.slug %}">
-                            <i class="bi bi-calendar-week me-2"></i> My Classes
+                        <a class="nav-link px-3 py-2 {% if 'coach_class' in url_name or 'session' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'coach_class_list' org_slug=org.slug %}">
+                            <i class="bi bi-calendar-week me-2"></i> My classes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 {% if 'attendance' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'attendance_analytics' org_slug=org.slug %}">
+                            <i class="bi bi-bar-chart me-2"></i> Attendance
                         </a>
                     </li>
                 </ul>
                 {% endif %}
+                {% endwith %}
 
                 <div class="d-md-none border-top border-secondary mt-3 pt-3 px-3 pb-3">
                     <span class="text-white-50 small d-block mb-2">{{ request.user.get_full_name|default:request.user.username }}</span>

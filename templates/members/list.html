@@ -13,6 +13,9 @@
     <a href="{% url 'member_import' org_slug=org.slug %}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-upload me-1"></i> Import CSV
     </a>
+    <a href="{% url 'member_export' org_slug=org.slug %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-download me-1"></i> Export CSV
+    </a>
 </div>
 {% endblock %}
 

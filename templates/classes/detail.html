@@ -118,9 +118,27 @@
                                 {% endif %}
                             </td>
                             <td class="text-muted small py-2 text-end pe-3">
-                                {% with count=session.attendance.count %}
-                                {% if count %}{{ count }} recorded{% endif %}
-                                {% endwith %}
+                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                    {% with count=session.attendance.count %}
+                                    {% if count %}<span>{{ count }} recorded</span>{% endif %}
+                                    {% endwith %}
+                                    <form method="post" action="{% url 'session_cancel' org_slug=org.slug pk=cls.pk session_pk=session.pk %}">
+                                        {% csrf_token %}
+                                        {% if not session.is_cancelled %}
+                                        <input type="hidden" name="notify" value="1">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                                style="font-size:0.7rem;"
+                                                onclick="return confirm('Cancel this session and email enrolled members?')">
+                                            Cancel
+                                        </button>
+                                        {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                                style="font-size:0.7rem;">
+                                            Reinstate
+                                        </button>
+                                        {% endif %}
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}

@@ -181,6 +181,34 @@ class RecordPaymentView(OrgAdminMixin, View):
         return redirect('invoice_detail', org_slug=self.org.slug, pk=pk)
 
 
+class BillingExportView(OrgAdminMixin, View):
+    def get(self, request, org_slug):
+        import csv
+        from django.http import HttpResponse
+        invoices = (
+            Invoice.objects.filter(organisation=self.org)
+            .select_related('member')
+            .prefetch_related('payments')
+            .order_by('-created_at')
+        )
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{self.org.slug}-billing.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Member', 'Period', 'Amount', 'Due date', 'Status', 'Paid at', 'Payment method'])
+        for inv in invoices:
+            payment = inv.payments.order_by('-paid_at').first()
+            writer.writerow([
+                inv.member.name,
+                inv.period,
+                str(inv.amount),
+                inv.due_date.isoformat(),
+                inv.get_status_display(),
+                payment.paid_at.strftime('%Y-%m-%d') if payment else '',
+                payment.method if payment else '',
+            ])
+        return response
+
+
 class ChaseOverdueView(OrgAdminMixin, View):
     def post(self, request, org_slug):
         from .emails import send_invoice_email
