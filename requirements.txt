@@ -3,3 +3,4 @@ mysqlclient
 python-dotenv
 django-htmx
 django-auditlog
+stripe

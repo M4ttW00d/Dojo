@@ -26,4 +26,5 @@ urlpatterns = [
     path('', root_redirect, name='root'),
     path('org/<slug:org_slug>/', include('organisations.urls')),
     path('p/<str:token>/', include('members.portal_urls')),
+    path('stripe/', include('billing.stripe_urls')),
 ]
