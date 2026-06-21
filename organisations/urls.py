@@ -9,4 +9,5 @@ urlpatterns = [
     path('audit/', views.AuditLogView.as_view(), name='org_audit_log'),
     path('staff/', views.StaffListView.as_view(), name='org_staff'),
     path('settings/fields/', views.CustomFieldSettingsView.as_view(), name='org_custom_fields'),
+    path('settings/progression/', include('progression.urls')),
 ]

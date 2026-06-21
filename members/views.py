@@ -78,6 +78,12 @@ class MemberDetailView(OrgAdminMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['guardians'] = self.object.guardians.all()
         context['invoices'] = self.object.invoices.order_by('-created_at')[:5]
+        from progression.models import MemberProgression, ProgressionStage
+        context['progressions'] = MemberProgression.objects.filter(
+            member=self.object
+        ).select_related('stage').order_by('-achieved_date')
+        context['stages'] = ProgressionStage.objects.filter(organisation=self.org)
+        context['current_grade'] = context['progressions'].first()
         from .models import CustomField
         values = self.object.custom_field_values or {}
         context['custom_fields'] = [
@@ -134,6 +140,34 @@ class MemberArchiveView(OrgAdminMixin, View):
         member.save(update_fields=['is_active'])
         status = 'reactivated' if member.is_active else 'archived'
         messages.success(request, f'{member.name} {status}.')
+        return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
+
+
+class RecordPromotionView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        member = get_object_or_404(Member, pk=pk, organisation=self.org)
+        from progression.models import MemberProgression, ProgressionStage
+        stage_pk = request.POST.get('stage_id')
+        achieved_date = request.POST.get('achieved_date')
+        notes = request.POST.get('notes', '').strip()
+        stage = get_object_or_404(ProgressionStage, pk=stage_pk, organisation=self.org)
+        MemberProgression.objects.create(
+            member=member,
+            stage=stage,
+            achieved_date=achieved_date,
+            notes=notes,
+        )
+        messages.success(request, f'{member.name} promoted to {stage.name}.')
+        return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
+
+
+class DeleteProgressionView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk, prog_pk):
+        member = get_object_or_404(Member, pk=pk, organisation=self.org)
+        from progression.models import MemberProgression
+        prog = get_object_or_404(MemberProgression, pk=prog_pk, member=member)
+        prog.delete()
+        messages.success(request, 'Progression record removed.')
         return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
 
 

@@ -168,6 +168,93 @@
     <div class="col-lg-4">
 
         <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    Progression
+                    {% if current_grade %}
+                    <span class="ms-1">
+                        {% if current_grade.stage.colour %}
+                        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:{{ current_grade.stage.colour }};border:1px solid rgba(0,0,0,0.15);vertical-align:middle;"></span>
+                        {% endif %}
+                        <span class="small fw-semibold text-dark">{{ current_grade.stage.name }}</span>
+                    </span>
+                    {% endif %}
+                </h6>
+                {% if stages %}
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#promote-form">
+                    <i class="bi bi-award me-1"></i> Promote
+                </button>
+                {% endif %}
+            </div>
+
+            {% if stages %}
+            <div class="collapse" id="promote-form">
+                <div class="card-body border-bottom bg-light">
+                    <form method="post" action="{% url 'member_promote' org_slug=org.slug pk=member.pk %}">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Grade</label>
+                                <select name="stage_id" class="form-select form-select-sm">
+                                    {% for stage in stages %}
+                                    <option value="{{ stage.pk }}">{{ stage.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Date</label>
+                                <input type="date" name="achieved_date" class="form-control form-control-sm" value="{% now 'Y-m-d' %}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Notes</label>
+                                <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-sm btn-dark w-100">Save</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if progressions %}
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for prog in progressions %}
+                        <tr>
+                            <td class="ps-3 py-2" style="width:24px;">
+                                {% if prog.stage.colour %}
+                                <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:{{ prog.stage.colour }};border:1px solid rgba(0,0,0,0.1);"></span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2 small fw-semibold">{{ prog.stage.name }}</td>
+                            <td class="py-2 small text-muted">{{ prog.achieved_date|date:"d M Y" }}</td>
+                            <td class="py-2 text-end pe-3">
+                                <form method="post" action="{% url 'member_progression_delete' org_slug=org.slug pk=member.pk prog_pk=prog.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Remove this record?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body">
+                <p class="text-muted small mb-0">
+                    {% if stages %}No promotions recorded.{% else %}<a href="{% url 'progression_settings' org_slug=org.slug %}">Set up grades first.</a>{% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-white border-bottom py-3">
                 <h6 class="mb-0">Classes</h6>
             </div>

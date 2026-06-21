@@ -6,6 +6,7 @@ from members.models import Member
 class ProgressionStage(models.Model):
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='progression_stages')
     name = models.CharField(max_length=255)
+    colour = models.CharField(max_length=7, blank=True, help_text='Hex colour, e.g. #FF0000')
     order = models.PositiveIntegerField(default=0)
 
     def __str__(self):
