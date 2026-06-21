@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import DetailView, ListView
 
-from dojo.mixins import OrgAdminMixin
+from dojo.mixins import ClassCoachMixin, OrgAdminMixin, OrgMixin
 from members.models import Member
 
 from .models import Attendance, Class, ClassCoach, ClassMember, Session
@@ -198,16 +198,14 @@ class GenerateSessionsView(OrgAdminMixin, View):
         return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
 
 
-class AttendanceRegisterView(OrgAdminMixin, View):
-    def _get_objects(self, pk, session_pk):
-        cls = get_object_or_404(Class, pk=pk, organisation=self.org)
-        session = get_object_or_404(Session, pk=session_pk, assigned_class=cls)
-        return cls, session
+class AttendanceRegisterView(ClassCoachMixin, View):
+    def _get_session(self, session_pk):
+        return get_object_or_404(Session, pk=session_pk, assigned_class=self.assigned_class)
 
     def get(self, request, org_slug, pk, session_pk):
-        cls, session = self._get_objects(pk, session_pk)
+        session = self._get_session(session_pk)
         enrolled = (
-            ClassMember.objects.filter(assigned_class=cls)
+            ClassMember.objects.filter(assigned_class=self.assigned_class)
             .select_related('member')
             .order_by('member__name')
         )
@@ -218,15 +216,15 @@ class AttendanceRegisterView(OrgAdminMixin, View):
         return render(request, 'classes/register.html', {
             'org': self.org,
             'org_membership': self.org_membership,
-            'cls': cls,
+            'cls': self.assigned_class,
             'session': session,
             'enrolled': enrolled,
             'present_ids': present_ids,
         })
 
     def post(self, request, org_slug, pk, session_pk):
-        cls, session = self._get_objects(pk, session_pk)
-        enrolled = ClassMember.objects.filter(assigned_class=cls).select_related('member')
+        session = self._get_session(session_pk)
+        enrolled = ClassMember.objects.filter(assigned_class=self.assigned_class).select_related('member')
         present_ids = {int(x) for x in request.POST.getlist('present')}
 
         for cm in enrolled:
@@ -240,7 +238,47 @@ class AttendanceRegisterView(OrgAdminMixin, View):
         session.save(update_fields=['notes'])
 
         messages.success(request, f'Register saved for {session.date:%d %b %Y}.')
-        return redirect('session_register', org_slug=self.org.slug, pk=cls.pk, session_pk=session.pk)
+        return redirect('session_register', org_slug=self.org.slug, pk=self.assigned_class.pk, session_pk=session.pk)
+
+
+class CoachClassListView(OrgMixin, ListView):
+    template_name = 'classes/coach_list.html'
+    context_object_name = 'classes'
+
+    def get_queryset(self):
+        if self.request.user.is_superuser or (
+            self.org_membership and self.org_membership.role == 'org_admin'
+        ):
+            return Class.objects.filter(organisation=self.org).prefetch_related('sessions').order_by('name')
+        return (
+            Class.objects.filter(
+                organisation=self.org,
+                coaches__user=self.request.user,
+            )
+            .prefetch_related('sessions')
+            .order_by('name')
+        )
+
+
+class CoachClassDetailView(ClassCoachMixin, View):
+    def get(self, request, org_slug, pk):
+        cls = self.assigned_class
+        from datetime import date
+        upcoming = cls.sessions.filter(date__gte=date.today()).order_by('date')[:10]
+        recent = cls.sessions.filter(date__lt=date.today()).order_by('-date')[:5]
+        enrolled = (
+            ClassMember.objects.filter(assigned_class=cls)
+            .select_related('member')
+            .order_by('member__name')
+        )
+        return render(request, 'classes/coach_detail.html', {
+            'org': self.org,
+            'org_membership': self.org_membership,
+            'cls': cls,
+            'upcoming': upcoming,
+            'recent': recent,
+            'enrolled': enrolled,
+        })
 
 
 class AddCoachView(OrgAdminMixin, View):
