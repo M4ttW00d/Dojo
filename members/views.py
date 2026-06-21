@@ -199,6 +199,58 @@ class DeleteProgressionView(OrgAdminMixin, View):
         return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
 
 
+class ApplicationListView(OrgAdminMixin, View):
+    def get(self, request, org_slug):
+        from django.shortcuts import render
+        from .models import MemberApplication
+        applications = MemberApplication.objects.filter(organisation=self.org)
+        status = request.GET.get('status', 'pending')
+        if status in ('pending', 'approved', 'rejected'):
+            applications = applications.filter(status=status)
+        return render(request, 'members/applications.html', {
+            'org': self.org,
+            'org_membership': self.org_membership,
+            'applications': applications,
+            'status_filter': status,
+        })
+
+
+class ApproveApplicationView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        from .models import MemberApplication
+        app = get_object_or_404(MemberApplication, pk=pk, organisation=self.org)
+        member = Member.objects.create(
+            organisation=self.org,
+            name=app.name,
+            date_of_birth=app.date_of_birth,
+            email=app.email,
+            phone=app.phone,
+        )
+        if app.guardian_name:
+            from .models import Guardian
+            Guardian.objects.create(
+                member=member,
+                name=app.guardian_name,
+                email=app.guardian_email,
+                phone=app.guardian_phone,
+                relationship='Guardian',
+            )
+        app.status = MemberApplication.Status.APPROVED
+        app.save(update_fields=['status'])
+        messages.success(request, f'{member.name} approved and added as a member.')
+        return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
+
+
+class RejectApplicationView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        from .models import MemberApplication
+        app = get_object_or_404(MemberApplication, pk=pk, organisation=self.org)
+        app.status = MemberApplication.Status.REJECTED
+        app.save(update_fields=['status'])
+        messages.success(request, f"Application from {app.name} rejected.")
+        return redirect('application_list', org_slug=self.org.slug)
+
+
 class AddMemberNoteView(OrgAdminMixin, View):
     def post(self, request, org_slug, pk):
         member = get_object_or_404(Member, pk=pk, organisation=self.org)

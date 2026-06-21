@@ -69,6 +69,31 @@ class CustomField(models.Model):
         ordering = ['organisation', 'order', 'name']
 
 
+class MemberApplication(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        APPROVED = 'approved', 'Approved'
+        REJECTED = 'rejected', 'Rejected'
+
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='applications')
+    name = models.CharField(max_length=255)
+    date_of_birth = models.DateField(null=True, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    guardian_name = models.CharField(max_length=255, blank=True)
+    guardian_email = models.EmailField(blank=True)
+    guardian_phone = models.CharField(max_length=20, blank=True)
+    notes = models.TextField(blank=True, help_text='Any additional information from the applicant')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+
+    def __str__(self):
+        return f"{self.name} — {self.organisation} ({self.get_status_display()})"
+
+    class Meta:
+        ordering = ['-submitted_at']
+
+
 class MemberNote(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='notes')
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

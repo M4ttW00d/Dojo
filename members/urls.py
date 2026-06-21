@@ -14,4 +14,7 @@ urlpatterns = [
     path('export/', views.MemberExportView.as_view(), name='member_export'),
     path('<int:pk>/notes/add/', views.AddMemberNoteView.as_view(), name='member_note_add'),
     path('<int:pk>/notes/<int:note_pk>/delete/', views.DeleteMemberNoteView.as_view(), name='member_note_delete'),
+    path('applications/', views.ApplicationListView.as_view(), name='application_list'),
+    path('applications/<int:pk>/approve/', views.ApproveApplicationView.as_view(), name='application_approve'),
+    path('applications/<int:pk>/reject/', views.RejectApplicationView.as_view(), name='application_reject'),
 ]

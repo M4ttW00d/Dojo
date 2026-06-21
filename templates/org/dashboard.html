@@ -6,76 +6,60 @@
 
 {% block main_content %}
 
-<div class="row g-3 mb-4">
+<div class="row g-3 mb-3">
     <div class="col-sm-6 col-lg-3">
-        {% if is_admin %}
-        <a href="{% url 'member_list' org_slug=org.slug %}" class="text-decoration-none">
-        {% endif %}
+        {% if is_admin %}<a href="{% url 'member_list' org_slug=org.slug %}" class="text-decoration-none">{% endif %}
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="bi bi-people fs-2 text-primary"></i>
-                    </div>
-                    <div>
-                        <div class="fs-3 fw-bold text-dark">{{ member_count }}</div>
-                        <div class="text-muted small">Active members</div>
-                    </div>
-                </div>
+                <div class="text-muted small mb-1">Active members</div>
+                <div class="fs-3 fw-bold text-dark">{{ member_count }}</div>
+                {% if new_members_month %}<div class="text-success small">+{{ new_members_month }} this month</div>{% endif %}
             </div>
         </div>
         {% if is_admin %}</a>{% endif %}
     </div>
     <div class="col-sm-6 col-lg-3">
-        <a href="{% if is_admin %}{% url 'class_list' org_slug=org.slug %}{% else %}{% url 'coach_class_list' org_slug=org.slug %}{% endif %}" class="text-decoration-none">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="bi bi-calendar-week fs-2 text-success"></i>
-                    </div>
-                    <div>
-                        <div class="fs-3 fw-bold text-dark">{{ class_count }}</div>
-                        <div class="text-muted small">Classes</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        </a>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="bi bi-clipboard-check fs-2 text-warning"></i>
-                    </div>
-                    <div>
-                        <div class="fs-3 fw-bold">{{ sessions_this_week }}</div>
-                        <div class="text-muted small">Sessions next 7 days{% if not is_admin %} (yours){% endif %}</div>
-                    </div>
-                </div>
+                <div class="text-muted small mb-1">Sessions next 7 days</div>
+                <div class="fs-3 fw-bold">{{ sessions_this_week }}</div>
+                {% if attendance_rate is not None %}<div class="text-muted small">{{ attendance_rate }}% attendance (4 wks)</div>{% endif %}
             </div>
         </div>
     </div>
     {% if is_admin %}
     <div class="col-sm-6 col-lg-3">
-        <div class="card border-0 shadow-sm h-100 {% if unenrolled_count %}border-warning{% endif %}">
+        <a href="{% url 'invoice_list' org_slug=org.slug %}" class="text-decoration-none">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="bi bi-person-exclamation fs-2 {% if unenrolled_count %}text-warning{% else %}text-secondary{% endif %}"></i>
-                    </div>
-                    <div>
-                        <div class="fs-3 fw-bold">{{ unenrolled_count }}</div>
-                        <div class="text-muted small">Members not in a class</div>
-                    </div>
-                </div>
+                <div class="text-muted small mb-1">Revenue this month</div>
+                <div class="fs-3 fw-bold text-success">£{{ revenue_month|floatformat:2 }}</div>
+                {% if outstanding %}<div class="text-warning small">£{{ outstanding|floatformat:2 }} outstanding</div>{% endif %}
             </div>
         </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a href="{% url 'attendance_analytics' org_slug=org.slug %}" class="text-decoration-none">
+        <div class="card border-0 shadow-sm h-100 {% if at_risk_count %}border-start border-warning border-3{% endif %}">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Members at risk</div>
+                <div class="fs-3 fw-bold {% if at_risk_count %}text-warning{% endif %}">{{ at_risk_count }}</div>
+                <div class="text-muted small">absent 2+ weeks</div>
+            </div>
+        </div>
+        </a>
     </div>
     {% endif %}
 </div>
+
+{% if is_admin and pending_applications %}
+<div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-3">
+    <i class="bi bi-person-plus-fill"></i>
+    <span class="small"><strong>{{ pending_applications }} membership application{{ pending_applications|pluralize }}</strong> waiting for review.</span>
+    <a href="{% url 'application_list' org_slug=org.slug %}" class="btn btn-sm btn-warning ms-auto">Review</a>
+</div>
+{% endif %}
 
 <div class="row g-4">
     <div class="col-lg-8">

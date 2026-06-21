@@ -5,9 +5,15 @@
 {% block page_subtitle %}{{ cls.name }} &mdash; {{ session.date|date:"l d M Y" }}{% endblock %}
 
 {% block page_actions %}
-<a href="{% url 'class_detail' org_slug=org.slug pk=cls.pk %}" class="btn btn-outline-secondary btn-sm">
-    <i class="bi bi-arrow-left me-1"></i> Back to {{ cls.name }}
-</a>
+<div class="d-flex gap-2">
+    <a href="{% url 'session_print' org_slug=org.slug pk=cls.pk session_pk=session.pk %}"
+       target="_blank" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-printer me-1"></i> Print register
+    </a>
+    <a href="{% url 'class_detail' org_slug=org.slug pk=cls.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to {{ cls.name }}
+    </a>
+</div>
 {% endblock %}
 
 {% block main_content %}

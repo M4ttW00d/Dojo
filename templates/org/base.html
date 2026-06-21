@@ -40,13 +40,19 @@
                 <p class="nav-label text-uppercase text-secondary small px-3 mt-3 mb-1" style="font-size: 0.7rem; letter-spacing: .08em;">Club</p>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link px-3 py-2 {% if 'member' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                        <a class="nav-link px-3 py-2 {% if 'member' in url_name and 'application' not in url_name %}active text-white{% else %}text-white-50{% endif %}"
                            href="{% url 'member_list' org_slug=org.slug %}">
                             <i class="bi bi-people me-2"></i> Members
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-3 py-2 {% if 'class' in url_name or 'session' in url_name or 'coach_class' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                        <a class="nav-link px-3 py-2 {% if 'application' in url_name %}active text-white{% else %}text-white-50{% endif %}"
+                           href="{% url 'application_list' org_slug=org.slug %}">
+                            <i class="bi bi-person-plus me-2"></i> Applications
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                    <a class="nav-link px-3 py-2 {% if 'class' in url_name or 'session' in url_name or 'coach_class' in url_name %}active text-white{% else %}text-white-50{% endif %}"
                            href="{% url 'class_list' org_slug=org.slug %}">
                             <i class="bi bi-calendar-week me-2"></i> Classes
                         </a>

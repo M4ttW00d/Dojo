@@ -326,6 +326,25 @@ class RemoveCoachView(OrgAdminMixin, View):
         return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
 
 
+class PrintRegisterView(ClassCoachMixin, View):
+    def get(self, request, org_slug, pk, session_pk):
+        session = get_object_or_404(Session, pk=session_pk, assigned_class=self.assigned_class)
+        enrolled = ClassMember.objects.filter(
+            assigned_class=self.assigned_class
+        ).select_related('member').order_by('member__name')
+        present_ids = set(
+            session.attendance.filter(present=True).values_list('member_id', flat=True)
+        )
+        return render(request, 'classes/print_register.html', {
+            'org': self.org,
+            'cls': self.assigned_class,
+            'session': session,
+            'enrolled': enrolled,
+            'present_ids': present_ids,
+            'today': date.today(),
+        })
+
+
 class CancelSessionView(OrgAdminMixin, View):
     def post(self, request, org_slug, pk, session_pk):
         cls = get_object_or_404(Class, pk=pk, organisation=self.org)

@@ -59,6 +59,51 @@ class DashboardView(OrgMixin, TemplateView):
                 'present': present,
             })
 
+        from billing.models import Invoice, Payment
+        from django.db.models import Sum, Q
+        from members.models import MemberApplication
+
+        first_of_month = today.replace(day=1)
+        four_weeks_ago = today - timedelta(weeks=4)
+        two_weeks_ago = today - timedelta(weeks=2)
+
+        revenue_month = Payment.objects.filter(
+            invoice__organisation=self.org,
+            paid_at__date__gte=first_of_month,
+        ).aggregate(t=Sum('amount'))['t'] or 0
+
+        outstanding = Invoice.objects.filter(
+            organisation=self.org, status=Invoice.Status.UNPAID
+        ).aggregate(t=Sum('amount'))['t'] or 0
+
+        new_members_month = active_members.filter(joined_date__gte=first_of_month).count()
+
+        from classes.models import Attendance
+        total_records = Attendance.objects.filter(
+            session__assigned_class__organisation=self.org,
+            session__date__gte=four_weeks_ago,
+        ).count()
+        present_records = Attendance.objects.filter(
+            session__assigned_class__organisation=self.org,
+            session__date__gte=four_weeks_ago,
+            present=True,
+        ).count()
+        attendance_rate = round(present_records / total_records * 100) if total_records else None
+
+        from django.db.models import Max
+        at_risk = active_members.annotate(
+            last_attended=Max(
+                'attendance__session__date',
+                filter=Q(attendance__present=True),
+            )
+        ).filter(
+            Q(last_attended__lt=two_weeks_ago) | Q(last_attended__isnull=True)
+        ).count()
+
+        pending_applications = MemberApplication.objects.filter(
+            organisation=self.org, status=MemberApplication.Status.PENDING
+        ).count() if is_admin else 0
+
         context.update({
             'member_count': member_count,
             'class_count': self.org.classes.count(),
@@ -67,6 +112,12 @@ class DashboardView(OrgMixin, TemplateView):
             'upcoming': sessions_with_status,
             'today': today,
             'is_admin': is_admin,
+            'revenue_month': revenue_month,
+            'outstanding': outstanding,
+            'new_members_month': new_members_month,
+            'attendance_rate': attendance_rate,
+            'at_risk_count': at_risk,
+            'pending_applications': pending_applications,
         })
         return context
 
