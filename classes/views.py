@@ -9,7 +9,7 @@ from django.views.generic import DetailView, ListView
 from dojo.mixins import ClassCoachMixin, OrgAdminMixin, OrgMixin
 from members.models import Member
 
-from .models import Attendance, Class, ClassCoach, ClassMember, Session
+from .models import Attendance, Class, ClassCoach, ClassMember, Session, WaitingList
 
 
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -22,7 +22,7 @@ def _class_form_class():
     class ClassForm(forms.ModelForm):
         class Meta:
             model = Class
-            fields = ['name', 'description']
+            fields = ['name', 'description', 'max_capacity']
             widgets = {'description': forms.Textarea(attrs={'rows': 3})}
 
         def __init__(self, *args, **kwargs):
@@ -149,6 +149,7 @@ class ClassDetailView(OrgAdminMixin, DetailView):
         )
         context['sessions'] = self.object.sessions.order_by('-date')[:10]
         context['days'] = DAYS
+        context['waiting_list'] = self.object.waiting_list.select_related('member')
         return context
 
 
@@ -156,8 +157,17 @@ class EnrolMemberView(OrgAdminMixin, View):
     def post(self, request, org_slug, pk):
         cls = get_object_or_404(Class, pk=pk, organisation=self.org)
         member = get_object_or_404(Member, pk=request.POST.get('member_id'), organisation=self.org)
-        ClassMember.objects.get_or_create(assigned_class=cls, member=member)
-        messages.success(request, f'{member.name} enrolled.')
+        already_enrolled = ClassMember.objects.filter(assigned_class=cls, member=member).exists()
+        if already_enrolled:
+            messages.info(request, f'{member.name} is already enrolled.')
+            return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
+        if cls.is_full:
+            WaitingList.objects.get_or_create(assigned_class=cls, member=member)
+            messages.warning(request, f'{cls.name} is full — {member.name} added to the waiting list.')
+        else:
+            WaitingList.objects.filter(assigned_class=cls, member=member).delete()
+            ClassMember.objects.create(assigned_class=cls, member=member)
+            messages.success(request, f'{member.name} enrolled.')
         return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
 
 
@@ -167,6 +177,20 @@ class UnenrolMemberView(OrgAdminMixin, View):
         member = get_object_or_404(Member, pk=member_pk, organisation=self.org)
         ClassMember.objects.filter(assigned_class=cls, member=member).delete()
         messages.success(request, f'{member.name} removed.')
+        # Promote first person from waiting list if there is one
+        next_up = WaitingList.objects.filter(assigned_class=cls).select_related('member').first()
+        if next_up:
+            ClassMember.objects.create(assigned_class=cls, member=next_up.member)
+            next_up.delete()
+            messages.info(request, f'{next_up.member.name} has been moved from the waiting list into the class.')
+        return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
+
+
+class RemoveFromWaitingListView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk, member_pk):
+        cls = get_object_or_404(Class, pk=pk, organisation=self.org)
+        WaitingList.objects.filter(assigned_class=cls, member_id=member_pk).delete()
+        messages.success(request, 'Removed from waiting list.')
         return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
 
 

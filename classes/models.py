@@ -26,6 +26,22 @@ class Class(models.Model):
             parts.append(f"{self.DAYS[entry['day']]} {time_str}".strip())
         return ', '.join(parts)
 
+    max_capacity = models.PositiveIntegerField(null=True, blank=True)
+
+    @property
+    def enrolled_count(self):
+        return self.enrolments.count()
+
+    @property
+    def is_full(self):
+        return self.max_capacity is not None and self.enrolled_count >= self.max_capacity
+
+    @property
+    def spots_left(self):
+        if self.max_capacity is None:
+            return None
+        return max(0, self.max_capacity - self.enrolled_count)
+
     def __str__(self):
         return f"{self.organisation} — {self.name}"
 
@@ -54,6 +70,19 @@ class ClassMember(models.Model):
         return f"{self.member} → {self.assigned_class}"
 
     class Meta:
+        unique_together = ('assigned_class', 'member')
+
+
+class WaitingList(models.Model):
+    assigned_class = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='waiting_list')
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='waiting_list')
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.member} — waiting for {self.assigned_class}"
+
+    class Meta:
+        ordering = ['joined_at']
         unique_together = ('assigned_class', 'member')
 
 

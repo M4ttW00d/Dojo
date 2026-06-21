@@ -23,7 +23,18 @@
 
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">Enrolled members <span class="badge bg-secondary-subtle text-secondary ms-1">{{ enrolled|length }}</span></h6>
+                <div>
+                    <h6 class="mb-0">
+                        Enrolled members
+                        <span class="badge bg-secondary-subtle text-secondary ms-1">{{ enrolled|length }}{% if cls.max_capacity %}/{{ cls.max_capacity }}{% endif %}</span>
+                        {% if cls.is_full %}<span class="badge bg-danger-subtle text-danger ms-1">Full</span>{% endif %}
+                    </h6>
+                    {% if cls.max_capacity and cls.spots_left is not None %}
+                    <div class="text-muted" style="font-size:0.75rem;">
+                        {% if cls.spots_left == 0 %}No spots left{% elif cls.spots_left == 1 %}1 spot left{% else %}{{ cls.spots_left }} spots left{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#enrol-form">
                     <i class="bi bi-person-plus me-1"></i> Enrol member
                 </button>
@@ -77,6 +88,32 @@
             </div>
             {% endif %}
         </div>
+
+        {% if waiting_list %}
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Waiting list <span class="badge bg-warning-subtle text-warning ms-1">{{ waiting_list|length }}</span></h6>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for entry in waiting_list %}
+                        <tr>
+                            <td class="ps-3 py-2 small fw-semibold">{{ entry.member.name }}</td>
+                            <td class="py-2 small text-muted">Joined {{ entry.joined_at|date:"d M Y" }}</td>
+                            <td class="text-end pe-3 py-2">
+                                <form method="post" action="{% url 'class_waiting_remove' org_slug=org.slug pk=cls.pk member_pk=entry.member.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
 
     </div>
 

@@ -32,10 +32,16 @@
                             {{ form.name }}
                             {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>{% endif %}
                         </div>
-                        <div class="col-12">
+                        <div class="col-sm-8">
                             <label class="form-label fw-semibold small">Description</label>
                             {{ form.description }}
                             {% if form.description.errors %}<div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label fw-semibold small">Max capacity</label>
+                            {{ form.max_capacity }}
+                            <div class="form-text">Leave blank for unlimited.</div>
+                            {% if form.max_capacity.errors %}<div class="text-danger small mt-1">{{ form.max_capacity.errors.0 }}</div>{% endif %}
                         </div>
                     </div>
                 </div>

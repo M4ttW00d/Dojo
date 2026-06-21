@@ -57,7 +57,7 @@
     </div>
 
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom py-3">
                 <h6 class="mb-0">Account</h6>
             </div>
@@ -65,6 +65,21 @@
                 <p><strong>Slug:</strong> <code>{{ org.slug }}</code></p>
                 <p><strong>Plan:</strong> {{ org.subscription_tier|capfirst }}</p>
                 <p class="mb-0"><strong>Created:</strong> {{ org.created_at|date:"d M Y" }}</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Email</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Send a test email to your account address to verify your email settings are working.</p>
+                <form method="post" action="{% url 'org_test_email' org_slug=org.slug %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-envelope me-1"></i> Send test email
+                    </button>
+                </form>
             </div>
         </div>
     </div>

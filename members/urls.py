@@ -12,4 +12,6 @@ urlpatterns = [
     path('<int:pk>/progression/<int:prog_pk>/delete/', views.DeleteProgressionView.as_view(), name='member_progression_delete'),
     path('import/', views.MemberImportView.as_view(), name='member_import'),
     path('export/', views.MemberExportView.as_view(), name='member_export'),
+    path('<int:pk>/notes/add/', views.AddMemberNoteView.as_view(), name='member_note_add'),
+    path('<int:pk>/notes/<int:note_pk>/delete/', views.DeleteMemberNoteView.as_view(), name='member_note_delete'),
 ]

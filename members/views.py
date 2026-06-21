@@ -110,6 +110,8 @@ class MemberDetailView(OrgAdminMixin, DetailView):
             organisation=self.org
         ).prefetch_related('stages')
         context['current_grade'] = context['progressions'].first()
+        from .models import CustomField, MemberNote
+        context['notes'] = MemberNote.objects.filter(member=self.object).select_related('author')
         from .models import CustomField
         values = self.object.custom_field_values or {}
         context['custom_fields'] = [
@@ -195,6 +197,25 @@ class DeleteProgressionView(OrgAdminMixin, View):
         prog.delete()
         messages.success(request, 'Progression record removed.')
         return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
+
+
+class AddMemberNoteView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        member = get_object_or_404(Member, pk=pk, organisation=self.org)
+        body = request.POST.get('body', '').strip()
+        if body:
+            from .models import MemberNote
+            MemberNote.objects.create(member=member, author=request.user, body=body)
+        return redirect('member_detail', org_slug=self.org.slug, pk=pk)
+
+
+class DeleteMemberNoteView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk, note_pk):
+        member = get_object_or_404(Member, pk=pk, organisation=self.org)
+        from .models import MemberNote
+        note = get_object_or_404(MemberNote, pk=note_pk, member=member)
+        note.delete()
+        return redirect('member_detail', org_slug=self.org.slug, pk=pk)
 
 
 class MemberExportView(OrgAdminMixin, View):

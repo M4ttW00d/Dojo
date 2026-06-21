@@ -188,6 +188,26 @@ class StaffListView(OrgAdminMixin, View):
         return redirect('org_staff', org_slug=self.org.slug)
 
 
+class TestEmailView(OrgAdminMixin, View):
+    def post(self, request, org_slug):
+        from django.core.mail import send_mail
+        recipient = request.user.email
+        if not recipient:
+            messages.error(request, 'Your user account has no email address set — add one in the Django admin first.')
+            return redirect('org_settings', org_slug=self.org.slug)
+        try:
+            send_mail(
+                subject=f'Test email from {self.org.name} (Dojo)',
+                message=f'This is a test email from Dojo to confirm your email settings are working.\n\n— {self.org.name}',
+                from_email=None,
+                recipient_list=[recipient],
+            )
+            messages.success(request, f'Test email sent to {recipient}.')
+        except Exception as e:
+            messages.error(request, f'Email failed: {e}')
+        return redirect('org_settings', org_slug=self.org.slug)
+
+
 class OrgSettingsView(OrgAdminMixin, View):
     template_name = 'org/settings.html'
 
