@@ -1,10 +1,15 @@
 from datetime import date, timedelta
 
+from django.contrib import messages
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect
+from django.views import View
 from django.views.generic import ListView, TemplateView
 from auditlog.models import LogEntry
 from dojo.mixins import OrgAdminMixin, OrgMixin
+from .models import Organisation, OrganisationMember
 
 
 class DashboardView(OrgMixin, TemplateView):
@@ -105,3 +110,69 @@ class AuditLogView(OrgAdminMixin, ListView):
             .select_related('actor', 'content_type')
             .order_by('-timestamp')
         )
+
+
+class StaffListView(OrgAdminMixin, View):
+    def get(self, request, org_slug):
+        from django.shortcuts import render
+        staff = (
+            OrganisationMember.objects.filter(organisation=self.org)
+            .select_related('user')
+            .order_by('user__first_name', 'user__username')
+        )
+        return render(request, 'org/staff.html', {
+            'org': self.org,
+            'org_membership': self.org_membership,
+            'staff': staff,
+            'roles': OrganisationMember.Role.choices,
+        })
+
+    def post(self, request, org_slug):
+        action = request.POST.get('action')
+
+        if action == 'add':
+            username = request.POST.get('username', '').strip()
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            password = request.POST.get('password', '').strip()
+            role = request.POST.get('role', OrganisationMember.Role.COACH)
+
+            if not username or not password:
+                messages.error(request, 'Username and password are required.')
+                return redirect('org_staff', org_slug=self.org.slug)
+
+            if User.objects.filter(username=username).exists():
+                messages.error(request, f'Username "{username}" is already taken.')
+                return redirect('org_staff', org_slug=self.org.slug)
+
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+            )
+            OrganisationMember.objects.create(user=user, organisation=self.org, role=role)
+            messages.success(request, f'{user.get_full_name() or username} added as {role}.')
+
+        elif action == 'change_role':
+            member_pk = request.POST.get('member_pk')
+            new_role = request.POST.get('role')
+            om = get_object_or_404(OrganisationMember, pk=member_pk, organisation=self.org)
+            if om.user == request.user:
+                messages.error(request, "You can't change your own role.")
+            else:
+                om.role = new_role
+                om.save(update_fields=['role'])
+                messages.success(request, f'Role updated for {om.user.get_full_name() or om.user.username}.')
+
+        elif action == 'remove':
+            member_pk = request.POST.get('member_pk')
+            om = get_object_or_404(OrganisationMember, pk=member_pk, organisation=self.org)
+            if om.user == request.user:
+                messages.error(request, "You can't remove yourself.")
+            else:
+                name = om.user.get_full_name() or om.user.username
+                om.delete()
+                messages.success(request, f'{name} removed from {self.org.name}.')
+
+        return redirect('org_staff', org_slug=self.org.slug)

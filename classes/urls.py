@@ -10,4 +10,6 @@ urlpatterns = [
     path('<int:pk>/unenrol/<int:member_pk>/', views.UnenrolMemberView.as_view(), name='class_unenrol'),
     path('<int:pk>/generate-sessions/', views.GenerateSessionsView.as_view(), name='class_generate_sessions'),
     path('<int:pk>/sessions/<int:session_pk>/register/', views.AttendanceRegisterView.as_view(), name='session_register'),
+    path('<int:pk>/coaches/add/', views.AddCoachView.as_view(), name='class_coach_add'),
+    path('<int:pk>/coaches/<int:coach_pk>/remove/', views.RemoveCoachView.as_view(), name='class_coach_remove'),
 ]

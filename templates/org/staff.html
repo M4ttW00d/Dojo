@@ -1,0 +1,119 @@
+{% extends 'org/base.html' %}
+
+{% block title %}Staff — {{ org.name }}{% endblock %}
+{% block page_title %}Staff{% endblock %}
+{% block page_subtitle %}Coaches and administrators for {{ org.name }}{% endblock %}
+
+{% block page_actions %}
+<button class="btn btn-dark btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#add-staff-form">
+    <i class="bi bi-person-plus me-1"></i> Add staff member
+</button>
+{% endblock %}
+
+{% block main_content %}
+
+<div class="collapse mb-4" id="add-staff-form">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3">
+            <h6 class="mb-0">Add staff member</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold small">First name</label>
+                        <input type="text" name="first_name" class="form-control">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold small">Last name</label>
+                        <input type="text" name="last_name" class="form-control">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold small">Username <span class="text-danger">*</span></label>
+                        <input type="text" name="username" class="form-control" autocomplete="off">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold small">Password <span class="text-danger">*</span></label>
+                        <input type="password" name="password" class="form-control" autocomplete="new-password">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold small">Role</label>
+                        <select name="role" class="form-select">
+                            {% for value, label in roles %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-dark">Create account</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if staff %}
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3 small fw-semibold">Name</th>
+                    <th class="small fw-semibold">Username</th>
+                    <th class="small fw-semibold">Role</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for om in staff %}
+                <tr>
+                    <td class="ps-3 small fw-semibold">
+                        {{ om.user.get_full_name|default:om.user.username }}
+                        {% if om.user == request.user %}
+                        <span class="badge bg-secondary-subtle text-secondary ms-1" style="font-size:0.6rem;">You</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted">{{ om.user.username }}</td>
+                    <td class="small">
+                        {% if om.user == request.user %}
+                        <span class="text-muted">{{ om.get_role_display }}</span>
+                        {% else %}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="change_role">
+                            <input type="hidden" name="member_pk" value="{{ om.pk }}">
+                            <select name="role" class="form-select form-select-sm d-inline-block w-auto"
+                                    onchange="this.form.submit()">
+                                {% for value, label in roles %}
+                                <option value="{{ value }}" {% if om.role == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        {% if om.user != request.user %}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="remove">
+                            <input type="hidden" name="member_pk" value="{{ om.pk }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Remove {{ om.user.get_full_name|default:om.user.username }} from {{ org.name }}?')">
+                                Remove
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-5">No staff members yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

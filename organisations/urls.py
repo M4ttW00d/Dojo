@@ -6,4 +6,5 @@ urlpatterns = [
     path('members/', include('members.urls')),
     path('classes/', include('classes.urls')),
     path('audit/', views.AuditLogView.as_view(), name='org_audit_log'),
+    path('staff/', views.StaffListView.as_view(), name='org_staff'),
 ]

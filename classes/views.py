@@ -9,7 +9,7 @@ from django.views.generic import DetailView, ListView
 from dojo.mixins import OrgAdminMixin
 from members.models import Member
 
-from .models import Attendance, Class, ClassMember, Session
+from .models import Attendance, Class, ClassCoach, ClassMember, Session
 
 
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -138,7 +138,15 @@ class ClassDetailView(OrgAdminMixin, DetailView):
             .exclude(pk__in=enrolled_ids)
             .order_by('name')
         )
-        context['coaches'] = self.object.coaches.select_related('user')
+        coaches = self.object.coaches.select_related('user')
+        coach_user_ids = coaches.values_list('user_id', flat=True)
+        context['coaches'] = coaches
+        from organisations.models import OrganisationMember
+        context['available_coaches'] = (
+            OrganisationMember.objects.filter(organisation=self.org)
+            .exclude(user_id__in=coach_user_ids)
+            .select_related('user')
+        )
         context['sessions'] = self.object.sessions.order_by('-date')[:10]
         context['days'] = DAYS
         return context
@@ -233,3 +241,24 @@ class AttendanceRegisterView(OrgAdminMixin, View):
 
         messages.success(request, f'Register saved for {session.date:%d %b %Y}.')
         return redirect('session_register', org_slug=self.org.slug, pk=cls.pk, session_pk=session.pk)
+
+
+class AddCoachView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        from django.contrib.auth.models import User
+        cls = get_object_or_404(Class, pk=pk, organisation=self.org)
+        user_pk = request.POST.get('user_id')
+        user = get_object_or_404(User, pk=user_pk)
+        ClassCoach.objects.get_or_create(assigned_class=cls, user=user)
+        messages.success(request, f'{user.get_full_name() or user.username} added as coach.')
+        return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
+
+
+class RemoveCoachView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk, coach_pk):
+        cls = get_object_or_404(Class, pk=pk, organisation=self.org)
+        coach = get_object_or_404(ClassCoach, pk=coach_pk, assigned_class=cls)
+        name = coach.user.get_full_name() or coach.user.username
+        coach.delete()
+        messages.success(request, f'{name} removed as coach.')
+        return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
