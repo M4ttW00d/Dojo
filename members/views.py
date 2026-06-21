@@ -197,6 +197,110 @@ class DeleteProgressionView(OrgAdminMixin, View):
         return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
 
 
+class MemberImportView(OrgAdminMixin, View):
+    template_name = 'members/import.html'
+
+    EXPECTED_HEADERS = ['name', 'date_of_birth', 'email', 'phone', 'joined_date', 'notes']
+
+    def get(self, request, org_slug):
+        return self._render(request)
+
+    def _render(self, request, preview=None, errors=None, raw_csv=None):
+        from django.shortcuts import render
+        return render(request, self.template_name, {
+            'org': self.org,
+            'org_membership': self.org_membership,
+            'preview': preview,
+            'errors': errors or [],
+            'raw_csv': raw_csv or '',
+        })
+
+    def post(self, request, org_slug):
+        import csv, io
+        action = request.POST.get('action', 'preview')
+        raw_csv = ''
+
+        if 'csv_file' in request.FILES:
+            raw_csv = request.FILES['csv_file'].read().decode('utf-8-sig').strip()
+        elif request.POST.get('raw_csv'):
+            raw_csv = request.POST.get('raw_csv', '').strip()
+
+        if not raw_csv:
+            messages.error(request, 'No data provided.')
+            return self._render(request)
+
+        reader = csv.DictReader(io.StringIO(raw_csv))
+        if not reader.fieldnames:
+            messages.error(request, 'Could not parse CSV — check the format.')
+            return self._render(request, raw_csv=raw_csv)
+
+        # Normalise headers (lowercase, strip whitespace)
+        reader.fieldnames = [h.strip().lower().replace(' ', '_') for h in reader.fieldnames]
+        if 'name' not in reader.fieldnames:
+            messages.error(request, 'CSV must have a "name" column.')
+            return self._render(request, raw_csv=raw_csv)
+
+        rows, errors = [], []
+        for i, row in enumerate(reader, start=2):
+            name = (row.get('name') or '').strip()
+            if not name:
+                errors.append(f'Row {i}: missing name, skipped.')
+                continue
+
+            dob_raw = (row.get('date_of_birth') or row.get('dob') or '').strip()
+            dob = None
+            if dob_raw:
+                from datetime import date as ddate
+                for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y'):
+                    try:
+                        dob = ddate.fromisoformat(dob_raw) if fmt == '%Y-%m-%d' else ddate.strptime(dob_raw, fmt)
+                        break
+                    except ValueError:
+                        continue
+                if not dob:
+                    errors.append(f'Row {i} ({name}): unrecognised date format "{dob_raw}" — date_of_birth left blank.')
+
+            joined_raw = (row.get('joined_date') or row.get('joined') or '').strip()
+            joined = None
+            if joined_raw:
+                for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y'):
+                    try:
+                        joined = ddate.fromisoformat(joined_raw) if fmt == '%Y-%m-%d' else ddate.strptime(joined_raw, fmt)
+                        break
+                    except ValueError:
+                        continue
+
+            rows.append({
+                'name': name,
+                'email': (row.get('email') or '').strip(),
+                'phone': (row.get('phone') or '').strip(),
+                'date_of_birth': dob,
+                'joined_date': joined,
+            })
+
+        if action == 'preview':
+            return self._render(request, preview=rows, errors=errors, raw_csv=raw_csv)
+
+        # action == 'import'
+        created = 0
+        for r in rows:
+            Member.objects.create(
+                organisation=self.org,
+                name=r['name'],
+                email=r['email'],
+                phone=r['phone'],
+                date_of_birth=r['date_of_birth'],
+                joined_date=r['joined_date'],
+            )
+            created += 1
+
+        messages.success(request, f'{created} member{"s" if created != 1 else ""} imported.')
+        if errors:
+            for e in errors:
+                messages.warning(request, e)
+        return redirect('member_list', org_slug=self.org.slug)
+
+
 class SendWelcomeEmailView(OrgAdminMixin, View):
     def post(self, request, org_slug, pk):
         member = get_object_or_404(Member, pk=pk, organisation=self.org)

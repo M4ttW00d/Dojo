@@ -39,7 +39,17 @@
             <div class="card-body">
                 <div class="text-muted small mb-1">Overdue</div>
                 <div class="fs-4 fw-bold {% if count_overdue %}text-warning{% endif %}">{{ count_overdue }}</div>
+                {% if count_overdue %}
+                <form method="post" action="{% url 'invoice_chase_overdue' org_slug=org.slug %}" class="mt-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-warning"
+                            onclick="return confirm('Send a reminder email to all {{ count_overdue }} overdue members?')">
+                        <i class="bi bi-envelope me-1"></i> Chase all
+                    </button>
+                </form>
+                {% else %}
                 <div class="text-muted small">past due date</div>
+                {% endif %}
             </div>
         </div>
     </div>

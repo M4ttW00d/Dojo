@@ -155,6 +155,9 @@
                 <a href="{% url 'attendance_analytics' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
                     <i class="bi bi-bar-chart me-2 text-muted"></i> Attendance analytics
                 </a>
+                <a href="{% url 'org_settings' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-gear me-2 text-muted"></i> Organisation settings
+                </a>
                 <a href="{% url 'org_audit_log' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
                     <i class="bi bi-journal-check me-2 text-muted"></i> Audit log
                 </a>

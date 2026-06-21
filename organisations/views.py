@@ -188,6 +188,39 @@ class StaffListView(OrgAdminMixin, View):
         return redirect('org_staff', org_slug=self.org.slug)
 
 
+class OrgSettingsView(OrgAdminMixin, View):
+    template_name = 'org/settings.html'
+
+    def get(self, request, org_slug):
+        from django.shortcuts import render
+        return render(request, self.template_name, {
+            'org': self.org,
+            'org_membership': self.org_membership,
+        })
+
+    def post(self, request, org_slug):
+        from django.shortcuts import render
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        website = request.POST.get('website', '').strip()
+
+        if not name:
+            messages.error(request, 'Organisation name is required.')
+            return render(request, self.template_name, {
+                'org': self.org,
+                'org_membership': self.org_membership,
+            })
+
+        self.org.name = name
+        self.org.email = email
+        self.org.phone = phone
+        self.org.website = website
+        self.org.save(update_fields=['name', 'email', 'phone', 'website'])
+        messages.success(request, 'Settings saved.')
+        return redirect('org_settings', org_slug=self.org.slug)
+
+
 class CustomFieldSettingsView(OrgAdminMixin, View):
     def get(self, request, org_slug):
         from django.shortcuts import render

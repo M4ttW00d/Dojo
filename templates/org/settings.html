@@ -1,0 +1,72 @@
+{% extends 'org/base.html' %}
+
+{% block title %}Settings — {{ org.name }}{% endblock %}
+{% block page_title %}Organisation settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">General</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Organisation name</label>
+                        <input type="text" name="name" value="{{ org.name }}" class="form-control" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Contact email</label>
+                        <input type="email" name="email" value="{{ org.email }}" class="form-control" placeholder="e.g. secretary@backwelljudo.co.uk">
+                        <div class="form-text">Shown to members on the portal as the contact address.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Phone</label>
+                        <input type="text" name="phone" value="{{ org.phone }}" class="form-control" placeholder="e.g. 07700 900000">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Website</label>
+                        <input type="url" name="website" value="{{ org.website }}" class="form-control" placeholder="https://...">
+                    </div>
+                    <button type="submit" class="btn btn-dark btn-sm">Save changes</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">More settings</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'org_custom_fields' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
+                    <div class="fw-semibold small">Custom member fields</div>
+                    <div class="text-muted small">Add extra fields to member profiles (e.g. licence number, medical notes).</div>
+                </a>
+                <a href="{% url 'progression_settings' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
+                    <div class="fw-semibold small">Progression &amp; grading</div>
+                    <div class="text-muted small">Define belt systems, mon grades, or other progression tracks.</div>
+                </a>
+                <a href="{% url 'org_staff' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
+                    <div class="fw-semibold small">Staff &amp; coaches</div>
+                    <div class="text-muted small">Manage who has access and what role they have.</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Account</h6>
+            </div>
+            <div class="card-body small text-muted">
+                <p><strong>Slug:</strong> <code>{{ org.slug }}</code></p>
+                <p><strong>Plan:</strong> {{ org.subscription_tier|capfirst }}</p>
+                <p class="mb-0"><strong>Created:</strong> {{ org.created_at|date:"d M Y" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

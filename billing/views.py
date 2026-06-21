@@ -181,6 +181,33 @@ class RecordPaymentView(OrgAdminMixin, View):
         return redirect('invoice_detail', org_slug=self.org.slug, pk=pk)
 
 
+class ChaseOverdueView(OrgAdminMixin, View):
+    def post(self, request, org_slug):
+        from .emails import send_invoice_email
+        overdue = [
+            inv for inv in Invoice.objects.filter(organisation=self.org, status=Invoice.Status.UNPAID)
+            if inv.is_overdue
+        ]
+        sent, skipped = 0, 0
+        for inv in overdue:
+            try:
+                ok, _ = send_invoice_email(inv, request=request)
+                if ok:
+                    sent += 1
+                else:
+                    skipped += 1
+            except Exception:
+                skipped += 1
+
+        if sent:
+            messages.success(request, f'Chased {sent} overdue invoice{"s" if sent != 1 else ""}.')
+        if skipped:
+            messages.warning(request, f'{skipped} invoice{"s" if skipped != 1 else ""} skipped — no email address on file.')
+        if not overdue:
+            messages.info(request, 'No overdue invoices to chase.')
+        return redirect('invoice_list', org_slug=self.org.slug)
+
+
 class BulkInvoiceView(OrgAdminMixin, View):
     template_name = 'billing/bulk_invoice.html'
 

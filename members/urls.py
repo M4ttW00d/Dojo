@@ -10,4 +10,5 @@ urlpatterns = [
     path('<int:pk>/send-welcome/', views.SendWelcomeEmailView.as_view(), name='member_send_welcome'),
     path('<int:pk>/promote/', views.RecordPromotionView.as_view(), name='member_promote'),
     path('<int:pk>/progression/<int:prog_pk>/delete/', views.DeleteProgressionView.as_view(), name='member_progression_delete'),
+    path('import/', views.MemberImportView.as_view(), name='member_import'),
 ]

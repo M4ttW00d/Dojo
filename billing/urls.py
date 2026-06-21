@@ -5,6 +5,7 @@ urlpatterns = [
     path('', views.InvoiceListView.as_view(), name='invoice_list'),
     path('create/', views.InvoiceCreateView.as_view(), name='invoice_create'),
     path('bulk/', views.BulkInvoiceView.as_view(), name='invoice_bulk'),
+    path('chase-overdue/', views.ChaseOverdueView.as_view(), name='invoice_chase_overdue'),
     path('<int:pk>/', views.InvoiceDetailView.as_view(), name='invoice_detail'),
     path('<int:pk>/mark-paid/', views.MarkPaidView.as_view(), name='invoice_mark_paid'),
     path('<int:pk>/mark-unpaid/', views.MarkUnpaidView.as_view(), name='invoice_mark_unpaid'),
