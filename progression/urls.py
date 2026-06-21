@@ -11,5 +11,6 @@ urlpatterns = [
     path('systems/<int:system_pk>/stages/<int:pk>/move/', views.MoveStageView.as_view(), name='progression_stage_move'),
     path('systems/<int:system_pk>/stages/<int:pk>/set-default/', views.SetDefaultStageView.as_view(), name='progression_stage_set_default'),
     path('systems/<int:system_pk>/stages/<int:pk>/edit/', views.EditStageView.as_view(), name='progression_stage_edit'),
+    path('systems/<int:pk>/apply-default/', views.ApplyDefaultStageView.as_view(), name='progression_system_apply_default'),
     path('import/', views.ImportProgressionView.as_view(), name='progression_import'),
 ]

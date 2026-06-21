@@ -26,6 +26,15 @@
     <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-3 flex-wrap">
         <h6 class="mb-0 me-auto">{{ system.name }}</h6>
 
+        <form method="post" action="{% url 'progression_system_apply_default' org_slug=org.slug pk=system.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary"
+                    title="Assign default grade to all active members who don't have one in this system"
+                    onclick="return confirm('Assign the default grade to all active members without a grade in {{ system.name }}?')">
+                <i class="bi bi-people me-1"></i> Apply to existing members
+            </button>
+        </form>
+
         <form method="post" action="{% url 'progression_system_toggle_auto' org_slug=org.slug pk=system.pk %}" class="d-flex align-items-center gap-2">
             {% csrf_token %}
             <span class="small text-muted">Auto-assign to new members</span>

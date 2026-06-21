@@ -145,6 +145,49 @@ class SetDefaultStageView(OrgAdminMixin, View):
         return redirect('progression_settings', org_slug=org_slug)
 
 
+class ApplyDefaultStageView(OrgAdminMixin, View):
+    """
+    Assigns the system's default stage to every active member who doesn't
+    already have any progression record within this system.
+    """
+    def post(self, request, org_slug, pk):
+        from django.utils import timezone
+        from members.models import Member
+
+        system = get_object_or_404(ProgressionSystem, pk=pk, organisation=self.org)
+        default_stage = system.stages.filter(is_default=True).first()
+
+        if not default_stage:
+            messages.error(request, f'"{system.name}" has no default stage set. Mark one with the star first.')
+            return redirect('progression_settings', org_slug=org_slug)
+
+        already_have = set(
+            MemberProgression.objects.filter(stage__system=system)
+            .values_list('member_id', flat=True)
+        )
+        members_to_assign = Member.objects.filter(
+            organisation=self.org, is_active=True
+        ).exclude(pk__in=already_have)
+
+        today = timezone.localdate()
+        count = 0
+        for member in members_to_assign:
+            MemberProgression.objects.create(
+                member=member,
+                stage=default_stage,
+                achieved_date=today,
+                notes='Default grade assigned in bulk.',
+            )
+            count += 1
+
+        if count:
+            messages.success(request, f'{count} member{"s" if count != 1 else ""} assigned to "{default_stage.name}".')
+        else:
+            messages.info(request, f'All active members already have a grade in "{system.name}".')
+
+        return redirect('progression_settings', org_slug=org_slug)
+
+
 class ImportProgressionView(OrgAdminMixin, View):
     """
     CSV import for historical progression data.
