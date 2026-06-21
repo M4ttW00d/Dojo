@@ -1,11 +1,13 @@
 # <img width="600" height="327" alt="Dojo" src="https://github.com/user-attachments/assets/e477db25-db4f-45b8-8df3-3902b4b8e4a9" />
 Open source club and class management platform. Manage members, attendance, billing, and documents. Self-hostable or run as a SaaS.
 
+**Hosted version coming soon at [dojoapp.co.uk](https://dojoapp.co.uk)**
+
 ---
 
 ## What is Dojo?
 
-Dojo is a free, open source platform for clubs, gyms, and coaching centres to manage everything in one place. Built to replace spreadsheets and disconnected tools, Dojo handles your members, classes, coaches, attendance, invoicing, and documents, with a parent-facing portal for payments and communication.
+Dojo is a free, open source platform for clubs, gyms, and coaching centres to manage everything in one place. Built to replace spreadsheets and disconnected tools, Dojo handles your members, classes, coaches, attendance, invoicing, and documents — with a member-facing portal for payments and communication.
 
 Dojo is sport and activity agnostic. Whether you run a judo club, a dance school, a boxing gym, or a music centre, Dojo adapts to your needs.
 
@@ -13,27 +15,31 @@ Dojo is sport and activity agnostic. Whether you run a judo club, a dance school
 
 ## Features
 
-- **Multi-organisation** - run multiple clubs or centres from a single instance
-- **Class management** - create classes, assign coaches, and enrol members
-- **Role-based permissions** - org admins, class coaches, and members each see only what they should
-- **Member profiles** - store personal details, emergency contacts, and custom fields you define
-- **Attendance tracking** - log registers per session, view history per member
-- **Billing and invoicing** - generate invoices, track payments, and integrate with Stripe
-- **Parent portal** - tokenised links for parents to view attendance, invoices, and pay online
-- **Document management** - send, sign, and store health and safety documents per member
-- **Custom progression** - define your own grading or level system (belts, grades, stages, whatever fits your activity)
-- **Self-hostable** - deploy on your own infrastructure and own your data
+- **Multi-organisation** — run multiple clubs or centres from a single instance
+- **Member management** — profiles, emergency contacts, guardian support for juniors, custom fields, CSV import/export
+- **Class management** — schedule builder, coach assignment, enrolment, capacity limits and waiting lists
+- **Attendance** — per-session registers, at-risk member detection, analytics dashboard
+- **Billing and invoicing** — generate invoices, record payments, bulk monthly invoicing, Stripe online payments and autopay subscriptions
+- **Member portal** — tokenised self-service pages for members and guardians: view invoices, pay online, see grade history and attendance
+- **Announcements** — bulk email all members or a specific class
+- **Progression / grading** — define your own belt, grade, or level system; record promotions with dates and notes
+- **Licence and qualification tracking** — track member licence numbers and expiry dates; track staff DBS and coaching licences with expiry alerts
+- **Calendar** — visual month/week/list view of all upcoming sessions
+- **Document management** — upload and store documents per member
+- **Custom fields** — add your own fields to member profiles
+- **Public signup** — share a link for prospective members to apply; approve or reject from the admin
+- **Audit logging** — full change history across members, classes, and attendance
+- **Self-hostable** — deploy on your own infrastructure and own your data
 
 ---
 
 ## Tech Stack
 
-- **Backend** - Django (Python)
-- **Database** - MySQL
-- **Frontend** - Django Templates + HTMX
-- **Payments** - Stripe and Stripe Connect
-- **File Storage** - AWS S3 / Cloudflare R2
-- **E-signatures** - DocuSeal
+- **Backend** — Django (Python)
+- **Database** — MySQL
+- **Frontend** — Django Templates + HTMX + Bootstrap 5
+- **Payments** — Stripe
+- **Licence** — AGPL-3.0
 
 ---
 
@@ -71,25 +77,28 @@ docker compose down
 ## Roadmap
 
 - [x] Core multi-tenant architecture
-- [x] Member management (add, edit, archive, guardian support, emergency contacts)
-- [x] Class management with schedule builder
-- [x] Attendance register
-- [x] Staff and coach management
-- [x] Custom fields per organisation
+- [x] Member management with guardian support, custom fields, CSV import/export
+- [x] Class management with schedule builder, capacity, and waiting lists
+- [x] Attendance register and analytics
+- [x] Staff and coach management with DBS/qualification tracking
+- [x] Billing, invoicing, and Stripe payments + autopay subscriptions
+- [x] Member tokenised portal
+- [x] Progression and grading system
+- [x] Document management
+- [x] Email notifications (welcome, invoice, cancellation, announcements)
+- [x] Public membership signup and approval flow
+- [x] Calendar view and financial reports
 - [x] Audit logging
-- [ ] Billing and invoicing
-- [ ] Stripe payment integration
-- [ ] Member tokenised portal
-- [ ] Progression / grading system
-- [ ] Document signing and storage
-- [ ] Email notifications
-- [ ] SaaS mode (Dojo Cloud)
+- [ ] Stripe Connect (per-organisation payment accounts)
+- [ ] E-signature integration (DocuSeal)
+- [ ] S3 / R2 file storage
+- [ ] Hosted SaaS — [dojoapp.co.uk](https://dojoapp.co.uk) (coming soon)
 
 ---
 
 ## Contributing
 
-Dojo is in early development. Contributions, ideas, and feedback are very welcome.
+Dojo is in early development. Contributions, ideas, and feedback are welcome.
 
 1. Fork the repo
 2. Create a feature branch (`git checkout -b feature/your-feature`)
@@ -106,4 +115,4 @@ Dojo is licensed under the [GNU Affero General Public License v3.0](./LICENSE).
 
 You are free to self-host and modify Dojo. If you run a modified version as a service over a network, you must make your modifications available under the same licence.
 
-Commercial hosted plans are available at [getdojo.app](https://getdojo.app) (coming soon).
+A hosted version will be available at [dojoapp.co.uk](https://dojoapp.co.uk).
