@@ -1,6 +1,7 @@
 from django.contrib import messages
-from django.shortcuts import redirect
-from django.views.generic import CreateView, ListView
+from django.shortcuts import get_object_or_404, redirect
+from django.views import View
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from dojo.mixins import OrgAdminMixin
 from .forms import GuardianFormSet, MemberForm
 from .models import Member
@@ -61,4 +62,56 @@ class MemberCreateView(OrgAdminMixin, CreateView):
         guardian_formset.instance = member
         guardian_formset.save()
         messages.success(self.request, f'{member.name} added successfully.')
-        return redirect('member_list', org_slug=self.org.slug)
+        return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
+
+
+class MemberDetailView(OrgAdminMixin, DetailView):
+    template_name = 'members/detail.html'
+    context_object_name = 'member'
+
+    def get_object(self):
+        return get_object_or_404(Member, pk=self.kwargs['pk'], organisation=self.org)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['guardians'] = self.object.guardians.all()
+        return context
+
+
+class MemberUpdateView(OrgAdminMixin, UpdateView):
+    template_name = 'members/form.html'
+    form_class = MemberForm
+
+    def get_object(self):
+        return get_object_or_404(Member, pk=self.kwargs['pk'], organisation=self.org)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Edit {self.object.name}'
+        context['member'] = self.object
+        if self.request.POST:
+            context['guardian_formset'] = GuardianFormSet(self.request.POST, instance=self.object)
+        else:
+            context['guardian_formset'] = GuardianFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        guardian_formset = context['guardian_formset']
+        if not guardian_formset.is_valid():
+            return self.form_invalid(form)
+        member = form.save()
+        guardian_formset.instance = member
+        guardian_formset.save()
+        messages.success(self.request, f'{member.name} updated successfully.')
+        return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
+
+
+class MemberArchiveView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        member = get_object_or_404(Member, pk=pk, organisation=self.org)
+        member.is_active = not member.is_active
+        member.save(update_fields=['is_active'])
+        status = 'reactivated' if member.is_active else 'archived'
+        messages.success(request, f'{member.name} {status}.')
+        return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)

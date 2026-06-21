@@ -36,7 +36,7 @@
         {% endif %}
     </td>
     <td class="text-end">
-        <a href="#" class="btn btn-sm btn-outline-secondary">View</a>
+        <a href="{% url 'member_detail' org_slug=org.slug pk=member.pk %}" class="btn btn-sm btn-outline-secondary">View</a>
     </td>
 </tr>
 {% endwith %}

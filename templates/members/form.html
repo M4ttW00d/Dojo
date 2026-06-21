@@ -5,9 +5,15 @@
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block page_actions %}
+{% if member %}
+<a href="{% url 'member_detail' org_slug=org.slug pk=member.pk %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back to {{ member.name }}
+</a>
+{% else %}
 <a href="{% url 'member_list' org_slug=org.slug %}" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-arrow-left me-1"></i> Back to members
 </a>
+{% endif %}
 {% endblock %}
 
 {% block main_content %}
@@ -138,7 +144,11 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-dark">Save member</button>
+                {% if member %}
+                <a href="{% url 'member_detail' org_slug=org.slug pk=member.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                {% else %}
                 <a href="{% url 'member_list' org_slug=org.slug %}" class="btn btn-outline-secondary">Cancel</a>
+                {% endif %}
             </div>
         </form>
     </div>

@@ -1,0 +1,163 @@
+{% extends 'org/base.html' %}
+
+{% block title %}{{ member.name }} — {{ org.name }}{% endblock %}
+
+{% block page_title %}
+    {{ member.name }}
+    {% if member.is_active %}
+    <span class="badge bg-success-subtle text-success ms-2" style="font-size: 0.6rem; vertical-align: middle;">Active</span>
+    {% else %}
+    <span class="badge bg-secondary-subtle text-secondary ms-2" style="font-size: 0.6rem; vertical-align: middle;">Inactive</span>
+    {% endif %}
+{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'member_list' org_slug=org.slug %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Members
+    </a>
+    <a href="{% url 'member_edit' org_slug=org.slug pk=member.pk %}" class="btn btn-dark btn-sm">
+        <i class="bi bi-pencil me-1"></i> Edit
+    </a>
+    <form method="post" action="{% url 'member_archive' org_slug=org.slug pk=member.pk %}" class="d-inline">
+        {% csrf_token %}
+        {% if member.is_active %}
+        <button type="submit" class="btn btn-outline-danger btn-sm"
+                onclick="return confirm('Archive {{ member.name }}? They will be marked inactive.')">
+            <i class="bi bi-archive me-1"></i> Archive
+        </button>
+        {% else %}
+        <button type="submit" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Reactivate
+        </button>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
+
+{% block main_content %}
+<div class="row g-4">
+
+    <div class="col-lg-8">
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Personal details</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted fw-normal small">Date of birth</dt>
+                    <dd class="col-sm-8 small">{{ member.date_of_birth|date:"d M Y"|default:"—" }}</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal small">Joined</dt>
+                    <dd class="col-sm-8 small">{{ member.joined_date|date:"d M Y"|default:"—" }}</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal small">Email</dt>
+                    <dd class="col-sm-8 small">
+                        {% if member.email %}
+                            <a href="mailto:{{ member.email }}">{{ member.email }}</a>
+                        {% else %}—{% endif %}
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal small">Phone</dt>
+                    <dd class="col-sm-8 small mb-0">
+                        {% if member.phone %}
+                            <a href="tel:{{ member.phone }}">{{ member.phone }}</a>
+                        {% else %}—{% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Emergency contacts</h6>
+            </div>
+            <div class="card-body">
+                {% if member.emergency_contact_name or member.emergency_contact_2_name %}
+                <div class="row g-3">
+                    {% if member.emergency_contact_name %}
+                    <div class="col-sm-6">
+                        <p class="text-muted small mb-1">Contact 1</p>
+                        <p class="mb-0 fw-semibold small">{{ member.emergency_contact_name }}</p>
+                        {% if member.emergency_contact_phone %}
+                        <a href="tel:{{ member.emergency_contact_phone }}" class="small">{{ member.emergency_contact_phone }}</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if member.emergency_contact_2_name %}
+                    <div class="col-sm-6">
+                        <p class="text-muted small mb-1">Contact 2</p>
+                        <p class="mb-0 fw-semibold small">{{ member.emergency_contact_2_name }}</p>
+                        {% if member.emergency_contact_2_phone %}
+                        <a href="tel:{{ member.emergency_contact_2_phone }}" class="small">{{ member.emergency_contact_2_phone }}</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-muted small mb-0">No emergency contacts recorded.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if guardians %}
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Guardians</h6>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3 small fw-semibold">Name</th>
+                            <th class="small fw-semibold">Relationship</th>
+                            <th class="small fw-semibold">Email</th>
+                            <th class="small fw-semibold">Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for guardian in guardians %}
+                        <tr>
+                            <td class="ps-3 small">{{ guardian.name }}</td>
+                            <td class="small text-muted">{{ guardian.relationship|default:"—" }}</td>
+                            <td class="small">
+                                {% if guardian.email %}<a href="mailto:{{ guardian.email }}">{{ guardian.email }}</a>{% else %}—{% endif %}
+                            </td>
+                            <td class="small">
+                                {% if guardian.phone %}<a href="tel:{{ guardian.phone }}">{{ guardian.phone }}</a>{% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="col-lg-4">
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Classes</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-0">No classes assigned yet.</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Billing</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-0">No invoices yet.</p>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
