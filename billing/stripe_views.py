@@ -35,7 +35,10 @@ class StripeWebhookView(View):
 
         if event['type'] == 'checkout.session.completed':
             session = event['data']['object']
-            invoice_pk = session.get('metadata', {}).get('invoice_pk')
+            try:
+                invoice_pk = session.metadata['invoice_pk']
+            except (AttributeError, KeyError, TypeError):
+                invoice_pk = None
             if invoice_pk:
                 try:
                     invoice = Invoice.objects.get(pk=invoice_pk)
@@ -44,8 +47,8 @@ class StripeWebhookView(View):
                             invoice=invoice,
                             amount=invoice.amount,
                             method='Stripe',
-                            stripe_payment_id=session.get('payment_intent', ''),
-                            notes=f"Stripe Checkout session {session['id']}",
+                            stripe_payment_id=getattr(session, 'payment_intent', ''),
+                            notes=f"Stripe Checkout session {session.id}",
                         )
                         invoice.status = 'paid'
                         invoice.save(update_fields=['status'])
