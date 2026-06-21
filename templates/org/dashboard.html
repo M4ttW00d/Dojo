@@ -1,37 +1,71 @@
 {% extends 'org/base.html' %}
 
 {% block title %}Dashboard — {{ org.name }}{% endblock %}
-
 {% block page_title %}Dashboard{% endblock %}
 {% block page_subtitle %}Welcome back, {{ request.user.get_full_name|default:request.user.username }}{% endblock %}
 
 {% block main_content %}
+
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-lg-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="bi bi-people fs-2 text-primary"></i>
-                    </div>
-                    <div>
-                        <div class="fs-3 fw-bold">{{ member_count }}</div>
-                        <div class="text-muted small">Active members</div>
+        <a href="{% url 'member_list' org_slug=org.slug %}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="bi bi-people fs-2 text-primary"></i>
+                        </div>
+                        <div>
+                            <div class="fs-3 fw-bold text-dark">{{ member_count }}</div>
+                            <div class="text-muted small">Active members</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <a href="{% url 'class_list' org_slug=org.slug %}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="bi bi-calendar-week fs-2 text-success"></i>
+                        </div>
+                        <div>
+                            <div class="fs-3 fw-bold text-dark">{{ class_count }}</div>
+                            <div class="text-muted small">Classes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
     </div>
     <div class="col-sm-6 col-lg-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-shrink-0 me-3">
-                        <i class="bi bi-calendar-week fs-2 text-success"></i>
+                        <i class="bi bi-clipboard-check fs-2 text-warning"></i>
                     </div>
                     <div>
-                        <div class="fs-3 fw-bold">{{ class_count }}</div>
-                        <div class="text-muted small">Classes</div>
+                        <div class="fs-3 fw-bold">{{ sessions_this_week }}</div>
+                        <div class="text-muted small">Sessions next 7 days</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100 {% if unenrolled_count %}border-warning{% endif %}">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <i class="bi bi-person-exclamation fs-2 {% if unenrolled_count %}text-warning{% else %}text-secondary{% endif %}"></i>
+                    </div>
+                    <div>
+                        <div class="fs-3 fw-bold">{{ unenrolled_count }}</div>
+                        <div class="text-muted small">Members not in a class</div>
                     </div>
                 </div>
             </div>
@@ -39,10 +73,84 @@
     </div>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body text-center py-5 text-muted">
-        <i class="bi bi-hammer fs-1 d-block mb-2"></i>
-        More to come — members, classes, and billing views are next.
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Upcoming sessions <span class="text-muted fw-normal small">— next 7 days</span></h6>
+            </div>
+            {% if upcoming %}
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 align-middle">
+                    <tbody>
+                        {% for item in upcoming %}
+                        <tr>
+                            <td class="ps-3 py-3" style="width: 110px;">
+                                <div class="fw-semibold small">{{ item.session.date|date:"D d M" }}</div>
+                                {% if item.session.date == today %}
+                                <span class="badge bg-primary-subtle text-primary" style="font-size:0.6rem;">Today</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3">
+                                <div class="fw-semibold small">{{ item.session.assigned_class.name }}</div>
+                                {% if item.session.is_cancelled %}
+                                <span class="badge bg-danger-subtle text-danger" style="font-size:0.6rem;">Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 text-muted small">
+                                {{ item.enrolled }} enrolled
+                            </td>
+                            <td class="py-3 text-end pe-3">
+                                {% if item.taken %}
+                                <a href="{% url 'session_register' org_slug=org.slug pk=item.session.assigned_class.pk session_pk=item.session.pk %}"
+                                   class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-check2 me-1"></i>{{ item.present }}/{{ item.enrolled }} taken
+                                </a>
+                                {% else %}
+                                <a href="{% url 'session_register' org_slug=org.slug pk=item.session.assigned_class.pk session_pk=item.session.pk %}"
+                                   class="btn btn-sm btn-dark">
+                                    <i class="bi bi-clipboard me-1"></i>Take register
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body text-center py-5 text-muted">
+                <i class="bi bi-calendar-check fs-2 d-block mb-2 text-secondary"></i>
+                No sessions in the next 7 days.
+                <div class="mt-2">
+                    <a href="{% url 'class_list' org_slug=org.slug %}">Generate sessions from a class</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Quick actions</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'member_add' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-person-plus me-2 text-muted"></i> Add member
+                </a>
+                <a href="{% url 'class_add' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-plus-circle me-2 text-muted"></i> Add class
+                </a>
+                <a href="{% url 'member_list' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-people me-2 text-muted"></i> View all members
+                </a>
+                <a href="{% url 'org_audit_log' org_slug=org.slug %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-journal-check me-2 text-muted"></i> Audit log
+                </a>
+            </div>
+        </div>
     </div>
 </div>
+
 {% endblock %}

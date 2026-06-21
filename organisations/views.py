@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.views.generic import ListView, TemplateView
@@ -10,8 +12,47 @@ class DashboardView(OrgMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['member_count'] = self.org.club_members.filter(is_active=True).count()
-        context['class_count'] = self.org.classes.count()
+        from classes.models import Attendance, ClassMember, Session
+        from members.models import Member
+
+        today = date.today()
+        week_end = today + timedelta(days=7)
+
+        active_members = self.org.club_members.filter(is_active=True)
+        member_count = active_members.count()
+
+        enrolled_ids = ClassMember.objects.filter(
+            assigned_class__organisation=self.org
+        ).values_list('member_id', flat=True)
+        unenrolled_count = active_members.exclude(pk__in=enrolled_ids).count()
+
+        upcoming_sessions = (
+            Session.objects
+            .filter(assigned_class__organisation=self.org, date__gte=today, date__lte=week_end)
+            .select_related('assigned_class')
+            .order_by('date')
+        )
+
+        sessions_with_status = []
+        for session in upcoming_sessions:
+            taken = Attendance.objects.filter(session=session).exists()
+            enrolled = ClassMember.objects.filter(assigned_class=session.assigned_class).count()
+            present = Attendance.objects.filter(session=session, present=True).count() if taken else None
+            sessions_with_status.append({
+                'session': session,
+                'taken': taken,
+                'enrolled': enrolled,
+                'present': present,
+            })
+
+        context.update({
+            'member_count': member_count,
+            'class_count': self.org.classes.count(),
+            'unenrolled_count': unenrolled_count,
+            'sessions_this_week': len(upcoming_sessions),
+            'upcoming': sessions_with_status,
+            'today': today,
+        })
         return context
 
 
