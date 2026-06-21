@@ -4,9 +4,14 @@
 {% block page_title %}Billing{% endblock %}
 
 {% block page_actions %}
-<a href="{% url 'invoice_create' org_slug=org.slug %}" class="btn btn-dark btn-sm">
-    <i class="bi bi-plus-lg me-1"></i> Create invoice
-</a>
+<div class="d-flex gap-2">
+    <a href="{% url 'invoice_bulk' org_slug=org.slug %}" class="btn btn-dark btn-sm">
+        <i class="bi bi-lightning me-1"></i> Generate monthly invoices
+    </a>
+    <a href="{% url 'invoice_create' org_slug=org.slug %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Single invoice
+    </a>
+</div>
 {% endblock %}
 
 {% block main_content %}

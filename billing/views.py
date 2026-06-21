@@ -181,6 +181,122 @@ class RecordPaymentView(OrgAdminMixin, View):
         return redirect('invoice_detail', org_slug=self.org.slug, pk=pk)
 
 
+class BulkInvoiceView(OrgAdminMixin, View):
+    template_name = 'billing/bulk_invoice.html'
+
+    def _default_period(self):
+        from datetime import date
+        import calendar
+        today = date.today()
+        # Default to next month so you're billing ahead
+        if today.month == 12:
+            return date(today.year + 1, 1, 1).strftime('%B %Y')
+        return date(today.year, today.month + 1, 1).strftime('%B %Y')
+
+    def _default_due_date(self):
+        from datetime import date
+        import calendar
+        today = date.today()
+        if today.month == 12:
+            last_day = calendar.monthrange(today.year + 1, 1)[1]
+            return date(today.year + 1, 1, last_day).isoformat()
+        last_day = calendar.monthrange(today.year, today.month + 1)[1]
+        return date(today.year, today.month + 1, last_day).isoformat()
+
+    def _member_rows(self, org, period):
+        members = (
+            Member.objects.filter(organisation=org, is_active=True, monthly_fee__isnull=False)
+            .exclude(monthly_fee=0)
+            .order_by('name')
+        )
+        existing_periods = set(
+            Invoice.objects.filter(organisation=org, period=period, member__in=members)
+            .values_list('member_id', flat=True)
+        )
+        rows = []
+        for m in members:
+            rows.append({
+                'member': m,
+                'amount': m.monthly_fee,
+                'has_subscription': m.has_active_subscription,
+                'already_invoiced': m.pk in existing_periods,
+            })
+        return rows
+
+    def get(self, request, org_slug):
+        period = request.GET.get('period', self._default_period())
+        rows = self._member_rows(self.org, period)
+        return render(request, self.template_name, {
+            'org': self.org,
+            'org_membership': self.org_membership,
+            'rows': rows,
+            'period': period,
+            'due_date': self._default_due_date(),
+        })
+
+    def post(self, request, org_slug):
+        period = request.POST.get('period', '').strip()
+        due_date_raw = request.POST.get('due_date', '').strip()
+        send_emails = request.POST.get('send_emails') == '1'
+        selected_ids = set(request.POST.getlist('member_ids'))
+
+        if not period or not due_date_raw or not selected_ids:
+            messages.error(request, 'Period, due date, and at least one member are required.')
+            return redirect('invoice_bulk', org_slug=self.org.slug)
+
+        try:
+            due_date = date.fromisoformat(due_date_raw)
+        except ValueError:
+            messages.error(request, 'Invalid due date.')
+            return redirect('invoice_bulk', org_slug=self.org.slug)
+
+        members = Member.objects.filter(
+            pk__in=selected_ids, organisation=self.org,
+            monthly_fee__isnull=False,
+        )
+
+        # Skip members who already have an invoice for this period
+        already = set(
+            Invoice.objects.filter(organisation=self.org, period=period, member__in=members)
+            .values_list('member_id', flat=True)
+        )
+
+        created_invoices = []
+        for member in members:
+            if member.pk in already:
+                continue
+            inv = Invoice.objects.create(
+                organisation=self.org,
+                member=member,
+                amount=member.monthly_fee,
+                period=period,
+                due_date=due_date,
+            )
+            created_invoices.append(inv)
+
+        skipped = len(already.intersection({int(i) for i in selected_ids}))
+        messages.success(
+            request,
+            f'{len(created_invoices)} invoice{"s" if len(created_invoices) != 1 else ""} created'
+            + (f', {skipped} skipped (already invoiced).' if skipped else '.'),
+        )
+
+        if send_emails and created_invoices:
+            from .emails import send_invoice_email
+            sent = 0
+            for inv in created_invoices:
+                try:
+                    ok, _ = send_invoice_email(inv, request=request)
+                    if ok:
+                        sent += 1
+                except Exception:
+                    pass
+            if sent:
+                messages.success(request, f'{sent} invoice email{"s" if sent != 1 else ""} sent.')
+
+        return redirect('invoice_list', org_slug=self.org.slug)
+
+
 class SendInvoiceEmailView(OrgAdminMixin, View):
     def post(self, request, org_slug, pk):
         invoice = get_object_or_404(Invoice, pk=pk, organisation=self.org)
