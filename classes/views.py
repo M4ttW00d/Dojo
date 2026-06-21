@@ -183,7 +183,38 @@ class UnenrolMemberView(OrgAdminMixin, View):
             ClassMember.objects.create(assigned_class=cls, member=next_up.member)
             next_up.delete()
             messages.info(request, f'{next_up.member.name} has been moved from the waiting list into the class.')
+            self._notify_waitlist_promoted(request, next_up.member, cls)
         return redirect('class_detail', org_slug=self.org.slug, pk=cls.pk)
+
+
+    def _notify_waitlist_promoted(self, request, member, cls):
+        from django.conf import settings
+        from django.core.mail import EmailMultiAlternatives
+        has_guardians = member.guardians.exists()
+        if has_guardians:
+            guardian = member.guardians.filter(email__gt='').first()
+            recipient = guardian.email if guardian else None
+        else:
+            recipient = member.email or None
+        if not recipient:
+            return
+        org_name = self.org.name
+        subject = f"A spot has opened up — {cls.name} ({org_name})"
+        greeting = f"Dear guardian of {member.name}" if has_guardians else f"Hi {member.name}"
+        body = (
+            f"{greeting},\n\n"
+            f"Great news! A spot has opened up in {cls.name} at {org_name} "
+            f"and {member.name} has been moved off the waiting list and into the class.\n\n"
+            f"No action is needed — you're all set.\n\n"
+            f"Thanks,\n{org_name}"
+        )
+        try:
+            EmailMultiAlternatives(
+                subject=subject, body=body,
+                from_email=settings.DEFAULT_FROM_EMAIL, to=[recipient],
+            ).send()
+        except Exception:
+            pass
 
 
 class RemoveFromWaitingListView(OrgAdminMixin, View):

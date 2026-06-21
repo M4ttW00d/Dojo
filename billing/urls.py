@@ -12,4 +12,5 @@ urlpatterns = [
     path('<int:pk>/mark-unpaid/', views.MarkUnpaidView.as_view(), name='invoice_mark_unpaid'),
     path('<int:pk>/record-payment/', views.RecordPaymentView.as_view(), name='invoice_record_payment'),
     path('<int:pk>/send/', views.SendInvoiceEmailView.as_view(), name='invoice_send_email'),
+    path('<int:pk>/remind/', views.SendReminderEmailView.as_view(), name='invoice_send_reminder'),
 ]

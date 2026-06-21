@@ -20,6 +20,11 @@
 {% endblock %}
 
 {% block main_content %}
+<form method="post" action="{% url 'member_bulk_action' org_slug=org.slug %}" id="bulkForm">
+{% csrf_token %}
+<input type="hidden" name="show" value="{{ show }}">
+<input type="hidden" name="q" value="{{ q }}">
+
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white border-bottom py-3">
         <div class="d-flex gap-2 flex-wrap align-items-center">
@@ -35,13 +40,29 @@
                    hx-target="#member-tbody"
                    hx-include="[name='show']">
 
-            <div class="btn-group btn-group-sm ms-auto" role="group">
+            <div class="btn-group btn-group-sm" role="group">
                 <a href="?show=active{% if q %}&q={{ q }}{% endif %}"
                    class="btn {% if show == 'active' %}btn-dark{% else %}btn-outline-secondary{% endif %}">Active</a>
                 <a href="?show=inactive{% if q %}&q={{ q }}{% endif %}"
                    class="btn {% if show == 'inactive' %}btn-dark{% else %}btn-outline-secondary{% endif %}">Inactive</a>
                 <a href="?show=all{% if q %}&q={{ q }}{% endif %}"
                    class="btn {% if show == 'all' %}btn-dark{% else %}btn-outline-secondary{% endif %}">All</a>
+            </div>
+
+            {# Bulk action bar — shown when rows are checked #}
+            <div id="bulkBar" class="d-none ms-auto d-flex align-items-center gap-2">
+                <span class="small text-muted"><span id="selectedCount">0</span> selected</span>
+                <button type="submit" name="bulk_action" value="email" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-envelope me-1"></i> Email
+                </button>
+                <button type="submit" name="bulk_action" value="invoice" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-receipt me-1"></i> Generate invoice
+                </button>
+                <button type="submit" name="bulk_action" value="archive"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('Archive all selected members?')">
+                    <i class="bi bi-archive me-1"></i> Archive
+                </button>
             </div>
 
             <input type="hidden" name="show" value="{{ show }}">
@@ -52,6 +73,9 @@
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
+                    <th style="width:40px;">
+                        <input type="checkbox" class="form-check-input" id="selectAll">
+                    </th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Phone</th>
@@ -88,4 +112,117 @@
     </div>
     {% endif %}
 </div>
+</form>
+
+{# Bulk email compose modal #}
+{% if bulk_email_members %}
+<div class="modal fade show d-block" style="background:rgba(0,0,0,.4);">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email {{ bulk_email_members|length }} member{{ bulk_email_members|length|pluralize }}</h5>
+                <a href="{% url 'member_list' org_slug=org.slug %}" class="btn-close"></a>
+            </div>
+            <form method="post" action="{% url 'member_bulk_action' org_slug=org.slug %}">
+                {% csrf_token %}
+                {% for m in bulk_email_members %}
+                <input type="hidden" name="member_ids" value="{{ m.pk }}">
+                {% endfor %}
+                <input type="hidden" name="bulk_action" value="email_send">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Subject</label>
+                        <input type="text" name="subject" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Message</label>
+                        <textarea name="body" rows="6" class="form-control" required></textarea>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        Sending to: {% for m in bulk_email_members %}{{ m.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a href="{% url 'member_list' org_slug=org.slug %}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+                    <button type="submit" class="btn btn-dark btn-sm">Send emails</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# Bulk invoice modal #}
+{% if bulk_invoice_members %}
+<div class="modal fade show d-block" style="background:rgba(0,0,0,.4);">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Invoice {{ bulk_invoice_members|length }} member{{ bulk_invoice_members|length|pluralize }}</h5>
+                <a href="{% url 'member_list' org_slug=org.slug %}" class="btn-close"></a>
+            </div>
+            <form method="post" action="{% url 'member_bulk_action' org_slug=org.slug %}">
+                {% csrf_token %}
+                {% for m in bulk_invoice_members %}
+                <input type="hidden" name="member_ids" value="{{ m.pk }}">
+                {% endfor %}
+                <input type="hidden" name="bulk_action" value="invoice_create">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Period</label>
+                        <input type="text" name="period" class="form-control" placeholder="e.g. September 2026" required>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Amount per member (£)</label>
+                            <input type="number" name="amount" step="0.01" min="0" class="form-control" placeholder="0.00">
+                            <div class="form-text">Leave blank to use each member's monthly fee.</div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Due date</label>
+                            <input type="date" name="due_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="send_emails" value="1" id="sendInvoiceEmails">
+                        <label class="form-check-label small" for="sendInvoiceEmails">Email invoices immediately</label>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        Creating invoices for: {% for m in bulk_invoice_members %}{{ m.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a href="{% url 'member_list' org_slug=org.slug %}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+                    <button type="submit" class="btn btn-dark btn-sm">Create invoices</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const selectAll = document.getElementById('selectAll');
+const bulkBar = document.getElementById('bulkBar');
+const countEl = document.getElementById('selectedCount');
+
+function updateBulkBar() {
+    const checked = document.querySelectorAll('.member-check:checked');
+    countEl.textContent = checked.length;
+    bulkBar.classList.toggle('d-none', checked.length === 0);
+    bulkBar.classList.toggle('d-flex', checked.length > 0);
+}
+
+selectAll.addEventListener('change', () => {
+    document.querySelectorAll('.member-check').forEach(cb => cb.checked = selectAll.checked);
+    updateBulkBar();
+});
+
+document.addEventListener('change', e => {
+    if (e.target.classList.contains('member-check')) updateBulkBar();
+});
+</script>
 {% endblock %}

@@ -365,3 +365,18 @@ class SendInvoiceEmailView(OrgAdminMixin, View):
         except Exception as e:
             messages.error(request, f'Email failed: {e}')
         return redirect('invoice_detail', org_slug=self.org.slug, pk=pk)
+
+
+class SendReminderEmailView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        invoice = get_object_or_404(Invoice, pk=pk, organisation=self.org)
+        from .emails import send_reminder_email
+        try:
+            ok, result = send_reminder_email(invoice, request=request)
+            if ok:
+                messages.success(request, f'Payment reminder sent to {result}.')
+            else:
+                messages.error(request, f'Could not send reminder: {result}')
+        except Exception as e:
+            messages.error(request, f'Reminder failed: {e}')
+        return redirect('invoice_detail', org_slug=self.org.slug, pk=pk)

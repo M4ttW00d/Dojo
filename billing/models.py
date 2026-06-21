@@ -16,6 +16,7 @@ class Invoice(models.Model):
     due_date = models.DateField()
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.UNPAID)
     notes = models.TextField(blank=True)
+    reminder_sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

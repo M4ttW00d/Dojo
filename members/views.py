@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from dojo.mixins import OrgAdminMixin
@@ -52,7 +52,95 @@ class MemberListView(OrgAdminMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['q'] = self.request.GET.get('q', '')
         context['show'] = self.request.GET.get('show', 'active')
+        context['bulk_email_members'] = self.request.session.pop('bulk_email_members', None)
+        context['bulk_invoice_members'] = self.request.session.pop('bulk_invoice_members', None)
+        if context['bulk_email_members']:
+            context['bulk_email_members'] = Member.objects.filter(pk__in=context['bulk_email_members'])
+        if context['bulk_invoice_members']:
+            context['bulk_invoice_members'] = Member.objects.filter(pk__in=context['bulk_invoice_members'])
         return context
+
+
+class MemberBulkActionView(OrgAdminMixin, View):
+    def post(self, request, org_slug):
+        action = request.POST.get('bulk_action')
+        member_ids = [int(x) for x in request.POST.getlist('member_ids') if x.isdigit()]
+        members = Member.objects.filter(pk__in=member_ids, organisation=self.org)
+
+        if not members.exists():
+            messages.warning(request, 'No members selected.')
+            return redirect('member_list', org_slug=org_slug)
+
+        if action == 'archive':
+            count = members.filter(is_active=True).update(is_active=False)
+            messages.success(request, f'{count} member{"s" if count != 1 else ""} archived.')
+            return redirect('member_list', org_slug=org_slug)
+
+        if action == 'email':
+            request.session['bulk_email_members'] = list(members.values_list('pk', flat=True))
+            return redirect('member_list', org_slug=org_slug)
+
+        if action == 'email_send':
+            from django.conf import settings
+            from django.core.mail import EmailMultiAlternatives
+            subject = request.POST.get('subject', '').strip()
+            body = request.POST.get('body', '').strip()
+            sent = 0
+            for member in members:
+                recipient = member.email
+                if not recipient:
+                    g = member.guardians.filter(email__gt='').first()
+                    recipient = g.email if g else None
+                if recipient:
+                    try:
+                        EmailMultiAlternatives(
+                            subject=subject, body=body,
+                            from_email=settings.DEFAULT_FROM_EMAIL, to=[recipient],
+                        ).send()
+                        sent += 1
+                    except Exception:
+                        pass
+            messages.success(request, f'Email sent to {sent} member{"s" if sent != 1 else ""}.')
+            return redirect('member_list', org_slug=org_slug)
+
+        if action == 'invoice':
+            request.session['bulk_invoice_members'] = list(members.values_list('pk', flat=True))
+            return redirect('member_list', org_slug=org_slug)
+
+        if action == 'invoice_create':
+            from billing.models import Invoice
+            from datetime import date
+            period = request.POST.get('period', '').strip()
+            amount_raw = request.POST.get('amount', '').strip()
+            due_date_raw = request.POST.get('due_date', '').strip()
+            send_emails = request.POST.get('send_emails') == '1'
+            try:
+                due_date = date.fromisoformat(due_date_raw)
+            except ValueError:
+                messages.error(request, 'Invalid due date.')
+                return redirect('member_list', org_slug=org_slug)
+            created = []
+            for member in members:
+                amount = amount_raw or (str(member.monthly_fee) if member.monthly_fee else None)
+                if not amount:
+                    continue
+                inv = Invoice.objects.create(
+                    organisation=self.org, member=member,
+                    amount=amount, period=period, due_date=due_date,
+                )
+                created.append(inv)
+            if send_emails and created:
+                from billing.emails import send_invoice_email
+                for inv in created:
+                    try:
+                        send_invoice_email(inv, request=request)
+                    except Exception:
+                        pass
+            messages.success(request, f'{len(created)} invoice{"s" if len(created) != 1 else ""} created.')
+            return redirect('member_list', org_slug=org_slug)
+
+        messages.error(request, 'Unknown action.')
+        return redirect('member_list', org_slug=org_slug)
 
 
 class MemberCreateView(OrgAdminMixin, CreateView):
