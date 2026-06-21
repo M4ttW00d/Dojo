@@ -135,3 +135,18 @@ class MemberArchiveView(OrgAdminMixin, View):
         status = 'reactivated' if member.is_active else 'archived'
         messages.success(request, f'{member.name} {status}.')
         return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
+
+
+class SendWelcomeEmailView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        member = get_object_or_404(Member, pk=pk, organisation=self.org)
+        from .emails import send_welcome_email
+        try:
+            ok, result = send_welcome_email(member)
+            if ok:
+                messages.success(request, f'Welcome email sent to {result}.')
+            else:
+                messages.error(request, f'Could not send email: {result}')
+        except Exception as e:
+            messages.error(request, f'Email failed: {e}')
+        return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)

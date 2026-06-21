@@ -7,4 +7,5 @@ urlpatterns = [
     path('<int:pk>/', views.MemberDetailView.as_view(), name='member_detail'),
     path('<int:pk>/edit/', views.MemberUpdateView.as_view(), name='member_edit'),
     path('<int:pk>/archive/', views.MemberArchiveView.as_view(), name='member_archive'),
+    path('<int:pk>/send-welcome/', views.SendWelcomeEmailView.as_view(), name='member_send_welcome'),
 ]

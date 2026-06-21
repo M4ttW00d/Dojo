@@ -179,3 +179,18 @@ class RecordPaymentView(OrgAdminMixin, View):
 
         messages.success(request, f'Payment of £{amount:.2f} recorded.')
         return redirect('invoice_detail', org_slug=self.org.slug, pk=pk)
+
+
+class SendInvoiceEmailView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        invoice = get_object_or_404(Invoice, pk=pk, organisation=self.org)
+        from .emails import send_invoice_email
+        try:
+            ok, result = send_invoice_email(invoice)
+            if ok:
+                messages.success(request, f'Invoice emailed to {result}.')
+            else:
+                messages.error(request, f'Could not send email: {result}')
+        except Exception as e:
+            messages.error(request, f'Email failed: {e}')
+        return redirect('invoice_detail', org_slug=self.org.slug, pk=pk)

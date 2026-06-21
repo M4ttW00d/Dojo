@@ -1,0 +1,20 @@
+{% extends 'emails/base.html' %}
+
+{% block subject %}Welcome to {{ org_name }}{% endblock %}
+
+{% block content %}
+<p style="color:#374151;font-size:16px;margin:0 0 24px;">Hi {{ member.name }},</p>
+
+<p style="color:#374151;font-size:15px;margin:0 0 24px;">
+  Welcome to <strong>{{ org_name }}</strong>! We're glad to have you with us.
+</p>
+
+<p style="color:#6b7280;font-size:14px;margin:0 0 24px;">
+  If you have any questions, please don't hesitate to get in touch.
+</p>
+
+<p style="color:#374151;font-size:15px;margin:24px 0 0;">
+  See you on the mat,<br>
+  <strong>{{ org_name }}</strong>
+</p>
+{% endblock %}

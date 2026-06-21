@@ -22,6 +22,12 @@
         <button type="submit" class="btn btn-outline-secondary btn-sm">Mark as unpaid</button>
     </form>
     {% endif %}
+    <form method="post" action="{% url 'invoice_send_email' org_slug=org.slug pk=invoice.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-envelope me-1"></i> Send to member
+        </button>
+    </form>
 </div>
 {% endblock %}
 
