@@ -42,7 +42,7 @@ Dojo is sport and activity agnostic. Whether you run a judo club, a dance school
 Dojo runs in Docker. You'll need [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed.
 
 ```bash
-git clone https://github.com/M4ttW00d/dojo.git
+git clone https://github.com/DojoUK/dojo.git
 cd dojo
 
 # Copy the example env file and fill in your values

@@ -239,7 +239,7 @@ The project has a working Django + MySQL stack running in Docker with a full adm
 
 ### Infrastructure
 
-- GitHub repo: public, AGPL-3.0 licenced, at `github.com/M4ttW00d/Dojo`
+- GitHub repo: public, AGPL-3.0 licenced, at `github.com/DojoUK/Dojo`
 - GitHub issues cover the full roadmap
 - `Dockerfile` — `python:3.12-slim`, installs MySQL client libs, copies and installs dependencies
 - `docker-compose.yml` — two services: `db` (MySQL 8.0) and `web` (Django). MySQL data persisted via named volume.
