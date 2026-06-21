@@ -11,8 +11,19 @@ class Organisation(models.Model):
     phone = models.CharField(max_length=30, blank=True)
     website = models.URLField(blank=True)
     settings = models.JSONField(default=dict, blank=True)
+    logo = models.ImageField(upload_to='logos/', null=True, blank=True)
+    custom_css = models.TextField(blank=True)
     subscription_tier = models.CharField(max_length=50, default='free')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def theme(self):
+        s = self.settings or {}
+        return {
+            'sidebar_color': s.get('sidebar_color', '#1E3A5F'),
+            'sidebar_color_dark': s.get('sidebar_color_dark', '#152d4a'),
+            'accent_color': s.get('accent_color', '#2563EB'),
+            'accent_hover': s.get('accent_hover', '#1d4ed8'),
+        }
 
     def save(self, *args, **kwargs):
         if not self.slug:

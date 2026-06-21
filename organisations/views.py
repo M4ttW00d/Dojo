@@ -301,15 +301,63 @@ class TestEmailView(OrgAdminMixin, View):
 class OrgSettingsView(OrgAdminMixin, View):
     template_name = 'org/settings.html'
 
+    PRESETS = [
+        {'name': 'Dojo Blue',      'sidebar': '#1E3A5F', 'accent': '#2563EB'},
+        {'name': 'Forest',         'sidebar': '#1A3C34', 'accent': '#059669'},
+        {'name': 'Indigo',         'sidebar': '#312e81', 'accent': '#4F46E5'},
+        {'name': 'Charcoal',       'sidebar': '#1f2937', 'accent': '#6366f1'},
+        {'name': 'Burgundy',       'sidebar': '#4a0e1a', 'accent': '#dc2626'},
+        {'name': 'Midnight',       'sidebar': '#0f172a', 'accent': '#0ea5e9'},
+        {'name': 'Slate',          'sidebar': '#334155', 'accent': '#f59e0b'},
+        {'name': 'Teal',           'sidebar': '#134e4a', 'accent': '#14b8a6'},
+    ]
+
     def get(self, request, org_slug):
         from django.shortcuts import render
         return render(request, self.template_name, {
             'org': self.org,
             'org_membership': self.org_membership,
+            'presets': self.PRESETS,
         })
 
     def post(self, request, org_slug):
-        from django.shortcuts import render
+        action = request.POST.get('action', 'general')
+
+        if action == 'theme':
+            sidebar_color = request.POST.get('sidebar_color', '#1E3A5F').strip()
+            accent_color = request.POST.get('accent_color', '#2563EB').strip()
+            # Derive a darker shade for sidebar gradient (~15% darker)
+            def darken(hex_color):
+                hex_color = hex_color.lstrip('#')
+                try:
+                    r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+                    r, g, b = max(0, int(r * 0.8)), max(0, int(g * 0.8)), max(0, int(b * 0.8))
+                    return f'#{r:02x}{g:02x}{b:02x}'
+                except Exception:
+                    return hex_color
+            settings = self.org.settings or {}
+            settings['sidebar_color'] = sidebar_color
+            settings['sidebar_color_dark'] = darken(sidebar_color)
+            settings['accent_color'] = accent_color
+            settings['accent_hover'] = darken(accent_color)
+            self.org.settings = settings
+            self.org.save(update_fields=['settings'])
+
+            if 'logo' in request.FILES:
+                self.org.logo = request.FILES['logo']
+                self.org.save(update_fields=['logo'])
+            if request.POST.get('remove_logo'):
+                self.org.logo.delete(save=True)
+
+            dev_mode = request.POST.get('dev_mode') == '1'
+            if dev_mode:
+                self.org.custom_css = request.POST.get('custom_css', '').strip()
+                self.org.save(update_fields=['custom_css'])
+
+            messages.success(request, 'Theme saved.')
+            return redirect('org_settings', org_slug=self.org.slug)
+
+        # General settings
         name = request.POST.get('name', '').strip()
         email = request.POST.get('email', '').strip()
         phone = request.POST.get('phone', '').strip()
@@ -320,6 +368,7 @@ class OrgSettingsView(OrgAdminMixin, View):
             return render(request, self.template_name, {
                 'org': self.org,
                 'org_membership': self.org_membership,
+                'presets': self.PRESETS,
             })
 
         self.org.name = name
