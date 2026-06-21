@@ -17,7 +17,11 @@ class ProgressionSettingsView(OrgAdminMixin, View):
             .filter(organisation=self.org)
             .prefetch_related('stages')
         )
-        return render(request, 'progression/settings.html', {'systems': systems})
+        return render(request, 'progression/settings.html', {
+            'systems': systems,
+            'org': self.org,
+            'org_membership': self.org_membership,
+        })
 
 
 class AddSystemView(OrgAdminMixin, View):
@@ -132,7 +136,11 @@ class ImportProgressionView(OrgAdminMixin, View):
 
     def get(self, request, org_slug):
         systems = ProgressionSystem.objects.filter(organisation=self.org).prefetch_related('stages')
-        return render(request, 'progression/import.html', {'systems': systems})
+        return render(request, 'progression/import.html', {
+            'systems': systems,
+            'org': self.org,
+            'org_membership': self.org_membership,
+        })
 
     def post(self, request, org_slug):
         from members.models import Member
@@ -213,4 +221,6 @@ class ImportProgressionView(OrgAdminMixin, View):
         return render(request, 'progression/import.html', {
             'systems': systems_ctx,
             'skip_reasons': skip_reasons,
+            'org': self.org,
+            'org_membership': self.org_membership,
         })
