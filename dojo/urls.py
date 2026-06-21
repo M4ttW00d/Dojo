@@ -25,4 +25,5 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('', root_redirect, name='root'),
     path('org/<slug:org_slug>/', include('organisations.urls')),
+    path('p/<str:token>/', include('members.portal_urls')),
 ]

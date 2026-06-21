@@ -186,7 +186,7 @@ class SendInvoiceEmailView(OrgAdminMixin, View):
         invoice = get_object_or_404(Invoice, pk=pk, organisation=self.org)
         from .emails import send_invoice_email
         try:
-            ok, result = send_invoice_email(invoice)
+            ok, result = send_invoice_email(invoice, request=request)
             if ok:
                 messages.success(request, f'Invoice emailed to {result}.')
             else:

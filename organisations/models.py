@@ -6,6 +6,7 @@ from django.utils.text import slugify
 class Organisation(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True)
+    email = models.EmailField(blank=True)
     settings = models.JSONField(default=dict, blank=True)
     subscription_tier = models.CharField(max_length=50, default='free')
     created_at = models.DateTimeField(auto_now_add=True)
