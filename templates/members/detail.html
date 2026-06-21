@@ -196,8 +196,12 @@
                             <div class="col-12">
                                 <label class="form-label small fw-semibold">Grade</label>
                                 <select name="stage_id" class="form-select form-select-sm">
-                                    {% for stage in stages %}
-                                    <option value="{{ stage.pk }}">{{ stage.name }}</option>
+                                    {% for system in systems %}
+                                    <optgroup label="{{ system.name }}">
+                                        {% for stage in system.stages.all %}
+                                        <option value="{{ stage.pk }}">{{ stage.name }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -230,6 +234,7 @@
                                 {% endif %}
                             </td>
                             <td class="py-2 small fw-semibold">{{ prog.stage.name }}</td>
+                            <td class="py-2 small text-muted">{{ prog.stage.system.name }}</td>
                             <td class="py-2 small text-muted">{{ prog.achieved_date|date:"d M Y" }}</td>
                             <td class="py-2 text-end pe-3">
                                 <form method="post" action="{% url 'member_progression_delete' org_slug=org.slug pk=member.pk prog_pk=prog.pk %}">

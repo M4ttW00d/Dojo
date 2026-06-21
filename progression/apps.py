@@ -7,6 +7,7 @@ class ProgressionConfig(AppConfig):
 
     def ready(self):
         from auditlog.registry import auditlog
-        from .models import MemberProgression, ProgressionStage
+        from .models import MemberProgression, ProgressionStage, ProgressionSystem
+        auditlog.register(ProgressionSystem)
         auditlog.register(ProgressionStage)
         auditlog.register(MemberProgression)

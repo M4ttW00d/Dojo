@@ -63,8 +63,23 @@ class MemberCreateView(OrgAdminMixin, CreateView):
         member.save()
         guardian_formset.instance = member
         guardian_formset.save()
+        self._auto_assign_progression(member)
         messages.success(self.request, f'{member.name} added successfully.')
         return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
+
+    def _auto_assign_progression(self, member):
+        from django.utils import timezone
+        from progression.models import MemberProgression, ProgressionSystem
+        today = timezone.localdate()
+        for system in ProgressionSystem.objects.filter(organisation=self.org, assign_to_new_members=True):
+            default_stage = system.stages.filter(is_default=True).first()
+            if default_stage:
+                MemberProgression.objects.create(
+                    member=member,
+                    stage=default_stage,
+                    achieved_date=today,
+                    notes='Auto-assigned on registration.',
+                )
 
 
 class MemberDetailView(OrgAdminMixin, DetailView):
@@ -78,11 +93,16 @@ class MemberDetailView(OrgAdminMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['guardians'] = self.object.guardians.all()
         context['invoices'] = self.object.invoices.order_by('-created_at')[:5]
-        from progression.models import MemberProgression, ProgressionStage
+        from progression.models import MemberProgression, ProgressionStage, ProgressionSystem
         context['progressions'] = MemberProgression.objects.filter(
             member=self.object
-        ).select_related('stage').order_by('-achieved_date')
-        context['stages'] = ProgressionStage.objects.filter(organisation=self.org)
+        ).select_related('stage__system').order_by('-achieved_date')
+        context['stages'] = ProgressionStage.objects.filter(
+            system__organisation=self.org
+        ).select_related('system')
+        context['systems'] = ProgressionSystem.objects.filter(
+            organisation=self.org
+        ).prefetch_related('stages')
         context['current_grade'] = context['progressions'].first()
         from .models import CustomField
         values = self.object.custom_field_values or {}
@@ -150,7 +170,7 @@ class RecordPromotionView(OrgAdminMixin, View):
         stage_pk = request.POST.get('stage_id')
         achieved_date = request.POST.get('achieved_date')
         notes = request.POST.get('notes', '').strip()
-        stage = get_object_or_404(ProgressionStage, pk=stage_pk, organisation=self.org)
+        stage = get_object_or_404(ProgressionStage, pk=stage_pk, system__organisation=self.org)
         MemberProgression.objects.create(
             member=member,
             stage=stage,
