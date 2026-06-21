@@ -95,6 +95,11 @@
                     </td>
                     <td class="py-2 text-end pe-3">
                         <div class="d-flex gap-1 justify-content-end">
+                            <button class="btn btn-sm btn-outline-secondary px-2" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#edit-stage-{{ stage.pk }}"
+                                    title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
                             <form method="post" action="{% url 'progression_stage_move' org_slug=org.slug system_pk=system.pk pk=stage.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="direction" value="up">
@@ -113,6 +118,24 @@
                                 </button>
                             </form>
                         </div>
+                    </td>
+                </tr>
+                <tr class="collapse" id="edit-stage-{{ stage.pk }}">
+                    <td colspan="5" class="bg-light py-2 px-3">
+                        <form method="post" action="{% url 'progression_stage_edit' org_slug=org.slug system_pk=system.pk pk=stage.pk %}" class="row g-2 align-items-end">
+                            {% csrf_token %}
+                            <div class="col-sm-5">
+                                <label class="form-label small fw-semibold mb-1">Name</label>
+                                <input type="text" name="name" class="form-control form-control-sm" value="{{ stage.name }}">
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label small fw-semibold mb-1">Colour</label>
+                                <input type="color" name="colour" class="form-control form-control-color form-control-sm w-100" value="{{ stage.colour|default:'#ffffff' }}">
+                            </div>
+                            <div class="col-sm-4">
+                                <button type="submit" class="btn btn-dark btn-sm w-100">Save changes</button>
+                            </div>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}

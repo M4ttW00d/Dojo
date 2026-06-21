@@ -115,6 +115,25 @@ class MoveStageView(OrgAdminMixin, View):
         return redirect('progression_settings', org_slug=org_slug)
 
 
+class EditStageView(OrgAdminMixin, View):
+    def post(self, request, org_slug, system_pk, pk):
+        system = get_object_or_404(ProgressionSystem, pk=system_pk, organisation=self.org)
+        stage = get_object_or_404(ProgressionStage, pk=pk, system=system)
+        name = request.POST.get('name', '').strip()
+        colour = request.POST.get('colour', '').strip()
+        if not name:
+            messages.error(request, 'Stage name is required.')
+            return redirect('progression_settings', org_slug=org_slug)
+        if system.stages.filter(name=name).exclude(pk=pk).exists():
+            messages.error(request, f'"{name}" already exists in {system.name}.')
+            return redirect('progression_settings', org_slug=org_slug)
+        stage.name = name
+        stage.colour = colour
+        stage.save(update_fields=['name', 'colour'])
+        messages.success(request, f'Stage updated.')
+        return redirect('progression_settings', org_slug=org_slug)
+
+
 class SetDefaultStageView(OrgAdminMixin, View):
     def post(self, request, org_slug, system_pk, pk):
         system = get_object_or_404(ProgressionSystem, pk=system_pk, organisation=self.org)
