@@ -35,11 +35,18 @@ def _class_form_class():
 
 def _parse_schedule(post_data):
     schedule = []
-    for day, time in zip(post_data.getlist('schedule_day'), post_data.getlist('schedule_time')):
+    days = post_data.getlist('schedule_day')
+    times = post_data.getlist('schedule_time')
+    ends = post_data.getlist('schedule_end')
+    for i, (day, time) in enumerate(zip(days, times)):
         try:
             d = int(day)
             if 0 <= d <= 6 and time:
-                schedule.append({'day': d, 'time': time})
+                entry = {'day': d, 'time': time}
+                end = ends[i] if i < len(ends) else ''
+                if end:
+                    entry['end'] = end
+                schedule.append(entry)
         except (ValueError, TypeError):
             pass
     return schedule

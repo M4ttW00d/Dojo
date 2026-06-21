@@ -17,10 +17,14 @@ class Class(models.Model):
     def schedule_display(self):
         if not self.schedule:
             return '—'
-        return ', '.join(
-            f"{self.DAYS[entry['day']]} {entry.get('time', '')}".strip()
-            for entry in self.schedule
-        )
+        parts = []
+        for entry in self.schedule:
+            time_str = entry.get('time', '')
+            end_str = entry.get('end', '')
+            if time_str and end_str:
+                time_str = f"{time_str}–{end_str}"
+            parts.append(f"{self.DAYS[entry['day']]} {time_str}".strip())
+        return ', '.join(parts)
 
     def __str__(self):
         return f"{self.organisation} — {self.name}"
