@@ -30,5 +30,13 @@ services:
     depends_on:
       - db
 
+  stripe:
+    image: stripe/stripe-cli:latest
+    command: listen --forward-to http://web:8000/stripe/webhook/ --skip-verify
+    environment:
+      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
+    depends_on:
+      - web
+
 volumes:
   mysql_data:
