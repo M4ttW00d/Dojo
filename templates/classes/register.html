@@ -42,7 +42,7 @@
                     <table class="table table-hover mb-0 align-middle">
                         <tbody>
                             {% for cm in enrolled %}
-                            <tr class="cursor-pointer {% if cm.member.medical_info %}table-warning{% endif %}" onclick="toggleCheck(this)">
+                            <tr class="cursor-pointer" onclick="toggleCheck(this)">
                                 <td class="ps-3 py-3" style="width:40px;">
                                     <input class="form-check-input attendance-check" type="checkbox"
                                            name="present" value="{{ cm.member.pk }}"

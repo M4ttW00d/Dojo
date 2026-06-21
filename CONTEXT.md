@@ -266,45 +266,89 @@ All apps are in `INSTALLED_APPS`. All models are migrated.
 
 | App | Models | Migrated | Views built |
 |---|---|---|---|
-| `organisations` | Organisation, OrganisationMember | ✅ | ✅ Dashboard, staff management, audit log, custom fields settings |
-| `members` | Member, Guardian, CustomField | ✅ | ✅ List (HTMX search), add, detail, edit, archive |
-| `classes` | Class, ClassCoach, ClassMember, Session, Attendance | ✅ | ✅ List, add, detail, edit, enrol/unenrol, session generation, attendance register |
-| `progression` | ProgressionStage, MemberProgression | ✅ | ❌ not yet |
-| `billing` | Invoice, Payment | ✅ | ❌ not yet |
-| `documents` | — | ❌ not created | ❌ not yet |
+| `organisations` | Organisation, OrganisationMember, Announcement | ✅ | ✅ Dashboard, staff management (add/edit/remove/qualifications), audit log, custom fields, announcements, calendar, financial report, org settings + theme |
+| `members` | Member, Guardian, CustomField, MemberApplication, MemberNote | ✅ | ✅ List (HTMX search + filters), add, detail, edit, archive, bulk actions (email/invoice/archive), CSV import/export, notes, applications queue (approve/reject), welcome email |
+| `classes` | Class, ClassCoach, ClassMember, WaitingList, Session, Attendance | ✅ | ✅ List, add, detail, edit, enrol/unenrol, waiting list, session generation, attendance register, print register, cancel sessions, coach views (siloed), attendance analytics |
+| `progression` | ProgressionSystem, ProgressionStage, MemberProgression | ✅ | ✅ System/stage CRUD, reorder stages, set default, bulk apply, record promotions, delete records, CSV import |
+| `billing` | Invoice, Payment | ✅ | ✅ Invoice list/create/detail, mark paid/unpaid, record payment, bulk billing run, send invoice email, send reminder, chase overdue, CSV export, Stripe Checkout + Subscriptions + webhook handler |
+| `documents` | Document, WaiverTemplate, SignedWaiver | ✅ | ✅ Document upload/download/delete per member, waiver template management, signed waiver download, offline waiver upload |
 
 ### Permission Layer
 
 `dojo/mixins.py` contains:
 - `OrgMixin` — login required, resolves `self.org` and `self.org_membership` from URL `org_slug`
 - `OrgAdminMixin` — extends OrgMixin, enforces org_admin role (superusers bypass)
-- `ClassCoachMixin` — extends OrgMixin, enforces coach assignment to specific class
+- `ClassCoachMixin` — extends OrgMixin, enforces coach assignment to specific class; admins bypass the restriction
+
+Public/unauthenticated routes:
+- `/join/<org_slug>/` — public member signup page (no login)
+- `/p/<token>/` — tokenised member portal (no login)
 
 ### URL Structure
 
 ```
-/                          → root_redirect (sends to org dashboard)
-/admin/                    → Django admin
-/login/, /logout/
-/org/<slug>/               → org dashboard
-/org/<slug>/members/       → member list
+/                              → root_redirect (sends to org dashboard)
+/admin/                        → Django admin
+/login/, /logout/, /password-reset/
+/join/<slug>/                  → public membership signup (no login)
+/p/<token>/                    → member portal (no login)
+/p/<token>/checkout/<inv_pk>/  → Stripe Checkout for invoice
+/p/<token>/subscribe/          → Stripe subscription signup
+/p/<token>/billing-portal/     → Stripe billing portal
+/stripe/webhook/               → Stripe webhook handler
+
+/org/<slug>/                   → org dashboard
+/org/<slug>/members/           → member list (HTMX search)
 /org/<slug>/members/add/
+/org/<slug>/members/import/
+/org/<slug>/members/export/
+/org/<slug>/members/bulk/
+/org/<slug>/members/applications/
 /org/<slug>/members/<pk>/
 /org/<slug>/members/<pk>/edit/
 /org/<slug>/members/<pk>/archive/
+/org/<slug>/members/<pk>/promote/
+/org/<slug>/members/<pk>/note/add/
+/org/<slug>/members/<pk>/note/<note_pk>/delete/
+/org/<slug>/members/<pk>/document/upload/
+/org/<slug>/members/<pk>/waiver/offline/
 /org/<slug>/classes/
 /org/<slug>/classes/add/
 /org/<slug>/classes/<pk>/
 /org/<slug>/classes/<pk>/edit/
 /org/<slug>/classes/<pk>/enrol/
 /org/<slug>/classes/<pk>/unenrol/<member_pk>/
+/org/<slug>/classes/<pk>/waitlist/<member_pk>/remove/
 /org/<slug>/classes/<pk>/generate-sessions/
 /org/<slug>/classes/<pk>/sessions/<session_pk>/register/
+/org/<slug>/classes/<pk>/sessions/<session_pk>/cancel/
+/org/<slug>/classes/<pk>/sessions/<session_pk>/print/
 /org/<slug>/classes/<pk>/coaches/add/
 /org/<slug>/classes/<pk>/coaches/<coach_pk>/remove/
+/org/<slug>/classes/coach/        → coach class list
+/org/<slug>/classes/coach/<pk>/   → coach class detail
+/org/<slug>/classes/analytics/
+/org/<slug>/billing/
+/org/<slug>/billing/create/
+/org/<slug>/billing/bulk/
+/org/<slug>/billing/export/
+/org/<slug>/billing/chase-overdue/
+/org/<slug>/billing/<pk>/
+/org/<slug>/billing/<pk>/pay/
+/org/<slug>/billing/<pk>/unpay/
+/org/<slug>/billing/<pk>/record-payment/
+/org/<slug>/billing/<pk>/email/
+/org/<slug>/billing/<pk>/reminder/
+/org/<slug>/progression/
+/org/<slug>/progression/import/
 /org/<slug>/staff/
 /org/<slug>/audit/
+/org/<slug>/calendar/
+/org/<slug>/calendar/events/
+/org/<slug>/finance/
+/org/<slug>/settings/
 /org/<slug>/settings/fields/
+/org/<slug>/waivers/
 ```
 
 ### Templates
@@ -319,27 +363,17 @@ All templates extend `org/base.html`. Partials in `templates/members/partials/` 
 
 ### What Has NOT Been Done Yet
 
-- Billing views (Invoice, Payment) — models exist, no UI
-- Progression views — models exist, no UI
-- Member portal (`/p/<token>/`) — token field exists on Member, no view
-- Email sending
-- Stripe integration
-- DocuSeal integration
-- S3/R2 file storage
-- `documents` app not yet created
-- Coach-facing views (coaches can log in but currently see nothing useful)
+- **Stripe Connect** — per-org Stripe accounts not yet wired; currently uses global keys only
+- **S3 / Cloudflare R2** — file uploads use local filesystem; no cloud storage yet
+- **DocuSeal** — originally planned for e-signatures; replaced in practice by a canvas-drawn signature captured on the signup page and stamped onto waiver PDFs via reportlab. DocuSeal integration no longer planned unless requirements change.
 
----
+### Additional packages now in use (beyond original requirements.txt)
 
-## Suggested Next Steps (In Order)
-
-1. **Billing** — invoice list (org-wide and per-member), create invoice, mark paid, basic payment recording
-2. **Email** — SMTP config, send invoice email, send welcome email on member create
-3. **Progression** — define stages per org, record promotions per member, display on member profile
-4. **Member portal** — `/p/<token>/` page showing their info, upcoming sessions, invoices
-5. **Coach views** — coaches log in and see their assigned classes and can take the register
-6. **Stripe** — connect Stripe account per org, hosted payment links on invoices
-7. **Documents** — DocuSeal integration, S3 storage
+- `stripe` — Stripe SDK
+- `reportlab` — PDF generation / signature stamping
+- `Pillow` — image handling
+- `django-auditlog` — audit logging (was already planned)
+- `django-htmx` — HTMX middleware (was already planned)
 
 ---
 

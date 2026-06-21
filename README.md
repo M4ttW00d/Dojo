@@ -25,7 +25,7 @@ Dojo is sport and activity agnostic. Whether you run a judo club, a dance school
 - **Progression / grading** — define your own belt, grade, or level system; record promotions with dates and notes
 - **Licence and qualification tracking** — track member licence numbers and expiry dates; track staff DBS and coaching licences with expiry alerts
 - **Calendar** — visual month/week/list view of all upcoming sessions
-- **Document management** — upload and store documents per member
+- **Document management** — upload and store documents per member; waiver templates with canvas e-signature on signup, stamped signed PDFs, offline paper waiver upload
 - **Custom fields** — add your own fields to member profiles
 - **Public signup** — share a link for prospective members to apply; approve or reject from the admin
 - **Audit logging** — full change history across members, classes, and attendance
@@ -90,7 +90,8 @@ docker compose down
 - [x] Calendar view and financial reports
 - [x] Audit logging
 - [ ] Stripe Connect (per-organisation payment accounts)
-- [ ] E-signature integration (DocuSeal)
+- [x] Canvas e-signature on signup with PDF stamping
+- [ ] DocuSeal integration (not currently planned — canvas signing covers the use case)
 - [ ] S3 / R2 file storage
 - [ ] Hosted SaaS — [dojoapp.co.uk](https://dojoapp.co.uk) (coming soon)
 
