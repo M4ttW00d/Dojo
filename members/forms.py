@@ -1,6 +1,50 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Guardian, Member
+from .models import CustomField, Guardian, Member
+
+
+def build_custom_field_widgets(org, data=None, initial_values=None):
+    """Return a list of dicts ready for template rendering."""
+    fields = CustomField.objects.filter(organisation=org)
+    rendered = []
+    for cf in fields:
+        key = f'cf_{cf.pk}'
+        current = (initial_values or {}).get(str(cf.pk), '')
+        if cf.field_type == CustomField.FieldType.TEXT:
+            widget = forms.TextInput(attrs={'class': 'form-control', 'name': key, 'value': current})
+        elif cf.field_type == CustomField.FieldType.DATE:
+            widget = forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'name': key, 'value': current})
+        elif cf.field_type == CustomField.FieldType.BOOLEAN:
+            widget = forms.CheckboxInput(attrs={'class': 'form-check-input', 'name': key})
+        elif cf.field_type == CustomField.FieldType.SELECT:
+            widget = forms.Select(
+                choices=[('', '—')] + [(o, o) for o in cf.options],
+                attrs={'class': 'form-select', 'name': key},
+            )
+        else:
+            widget = forms.TextInput(attrs={'class': 'form-control', 'name': key})
+
+        rendered.append({
+            'field': cf,
+            'key': key,
+            'html': widget.render(key, current if cf.field_type != CustomField.FieldType.BOOLEAN else bool(current)),
+            'is_bool': cf.field_type == CustomField.FieldType.BOOLEAN,
+            'checked': bool(current),
+        })
+    return rendered
+
+
+def extract_custom_field_values(org, post_data):
+    """Pull custom field values from POST data and return the dict to store on Member."""
+    fields = CustomField.objects.filter(organisation=org)
+    values = {}
+    for cf in fields:
+        key = f'cf_{cf.pk}'
+        if cf.field_type == CustomField.FieldType.BOOLEAN:
+            values[str(cf.pk)] = key in post_data
+        else:
+            values[str(cf.pk)] = post_data.get(key, '')
+    return values
 
 
 class MemberForm(forms.ModelForm):

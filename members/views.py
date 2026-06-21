@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from dojo.mixins import OrgAdminMixin
-from .forms import GuardianFormSet, MemberForm
+from .forms import GuardianFormSet, MemberForm, build_custom_field_widgets, extract_custom_field_values
 from .models import Member
 
 
@@ -49,6 +49,7 @@ class MemberCreateView(OrgAdminMixin, CreateView):
             context['guardian_formset'] = GuardianFormSet(self.request.POST)
         else:
             context['guardian_formset'] = GuardianFormSet()
+        context['custom_fields'] = build_custom_field_widgets(self.org, self.request.POST or None)
         return context
 
     def form_valid(self, form):
@@ -58,6 +59,7 @@ class MemberCreateView(OrgAdminMixin, CreateView):
             return self.form_invalid(form)
         member = form.save(commit=False)
         member.organisation = self.org
+        member.custom_field_values = extract_custom_field_values(self.org, self.request.POST)
         member.save()
         guardian_formset.instance = member
         guardian_formset.save()
@@ -75,6 +77,16 @@ class MemberDetailView(OrgAdminMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['guardians'] = self.object.guardians.all()
+        from .models import CustomField
+        values = self.object.custom_field_values or {}
+        context['custom_fields'] = [
+            {
+                'field': cf,
+                'value': values.get(str(cf.pk), ''),
+                'is_bool': cf.field_type == CustomField.FieldType.BOOLEAN,
+            }
+            for cf in CustomField.objects.filter(organisation=self.org)
+        ]
         return context
 
 
@@ -93,6 +105,11 @@ class MemberUpdateView(OrgAdminMixin, UpdateView):
             context['guardian_formset'] = GuardianFormSet(self.request.POST, instance=self.object)
         else:
             context['guardian_formset'] = GuardianFormSet(instance=self.object)
+        context['custom_fields'] = build_custom_field_widgets(
+            self.org,
+            self.request.POST or None,
+            initial_values=self.object.custom_field_values,
+        )
         return context
 
     def form_valid(self, form):
@@ -100,7 +117,9 @@ class MemberUpdateView(OrgAdminMixin, UpdateView):
         guardian_formset = context['guardian_formset']
         if not guardian_formset.is_valid():
             return self.form_invalid(form)
-        member = form.save()
+        member = form.save(commit=False)
+        member.custom_field_values = extract_custom_field_values(self.org, self.request.POST)
+        member.save()
         guardian_formset.instance = member
         guardian_formset.save()
         messages.success(self.request, f'{member.name} updated successfully.')

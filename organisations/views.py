@@ -10,6 +10,7 @@ from django.views.generic import ListView, TemplateView
 from auditlog.models import LogEntry
 from dojo.mixins import OrgAdminMixin, OrgMixin
 from .models import Organisation, OrganisationMember
+from members.models import CustomField
 
 
 class DashboardView(OrgMixin, TemplateView):
@@ -176,3 +177,45 @@ class StaffListView(OrgAdminMixin, View):
                 messages.success(request, f'{name} removed from {self.org.name}.')
 
         return redirect('org_staff', org_slug=self.org.slug)
+
+
+class CustomFieldSettingsView(OrgAdminMixin, View):
+    def get(self, request, org_slug):
+        from django.shortcuts import render
+        from members.models import CustomField
+        fields = CustomField.objects.filter(organisation=self.org)
+        return render(request, 'org/custom_fields.html', {
+            'org': self.org,
+            'org_membership': self.org_membership,
+            'fields': fields,
+            'field_types': CustomField.FieldType.choices,
+        })
+
+    def post(self, request, org_slug):
+        from django.shortcuts import render
+        from members.models import CustomField
+        action = request.POST.get('action')
+
+        if action == 'add':
+            name = request.POST.get('name', '').strip()
+            field_type = request.POST.get('field_type', 'text')
+            options_raw = request.POST.get('options', '').strip()
+            if name:
+                options = [o.strip() for o in options_raw.splitlines() if o.strip()] if options_raw else []
+                order = CustomField.objects.filter(organisation=self.org).count()
+                CustomField.objects.create(
+                    organisation=self.org,
+                    name=name,
+                    field_type=field_type,
+                    options=options,
+                    order=order,
+                )
+                messages.success(request, f'Field "{name}" added.')
+
+        elif action == 'delete':
+            field_pk = request.POST.get('field_pk')
+            field = get_object_or_404(CustomField, pk=field_pk, organisation=self.org)
+            field.delete()
+            messages.success(request, f'Field "{field.name}" deleted.')
+
+        return redirect('org_custom_fields', org_slug=self.org.slug)

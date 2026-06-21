@@ -133,6 +133,31 @@
                 </div>
             </div>
 
+            {% if custom_fields %}
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0">Additional info</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for cf in custom_fields %}
+                        <div class="col-sm-6">
+                            {% if cf.is_bool %}
+                            <div class="form-check mt-2">
+                                {{ cf.html }}
+                                <label class="form-check-label fw-semibold small">{{ cf.field.name }}</label>
+                            </div>
+                            {% else %}
+                            <label class="form-label fw-semibold small">{{ cf.field.name }}</label>
+                            {{ cf.html }}
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
                     <div class="form-check">

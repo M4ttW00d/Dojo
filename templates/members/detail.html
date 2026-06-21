@@ -101,6 +101,28 @@
             </div>
         </div>
 
+        {% if custom_fields %}
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0">Additional info</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    {% for item in custom_fields %}
+                    <dt class="col-sm-4 text-muted fw-normal small">{{ item.field.name }}</dt>
+                    <dd class="col-sm-8 small {% if not forloop.last %}mb-2{% else %}mb-0{% endif %}">
+                        {% if item.is_bool %}
+                            {% if item.value %}✓ Yes{% else %}<span class="text-muted">No</span>{% endif %}
+                        {% else %}
+                            {{ item.value|default:"—" }}
+                        {% endif %}
+                    </dd>
+                    {% endfor %}
+                </dl>
+            </div>
+        </div>
+        {% endif %}
+
         {% if guardians %}
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-white border-bottom py-3">
