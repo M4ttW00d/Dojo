@@ -125,6 +125,22 @@ class DashboardView(OrgMixin, TemplateView):
             Q(dbs_expiry__lt=today) | Q(coaching_licence_expiry__lt=today)
         ).count() if is_admin else 0
 
+        unsigned_waivers_count = 0
+        if is_admin:
+            from documents.models import SignedWaiver, WaiverTemplate
+            required_templates = WaiverTemplate.objects.filter(
+                organisation=self.org, is_active=True, is_required=True
+            )
+            if required_templates.exists():
+                signed_member_ids = set(
+                    SignedWaiver.objects.filter(
+                        template__in=required_templates
+                    ).values_list('member_id', flat=True)
+                )
+                unsigned_waivers_count = active_members.exclude(
+                    pk__in=signed_member_ids
+                ).count()
+
         context.update({
             'member_count': member_count,
             'class_count': self.org.classes.count(),
@@ -143,6 +159,7 @@ class DashboardView(OrgMixin, TemplateView):
             'licences_expired': licences_expired,
             'staff_expiring': staff_expiring,
             'staff_expired': staff_expired,
+            'unsigned_waivers_count': unsigned_waivers_count,
         })
         return context
 

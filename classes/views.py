@@ -227,6 +227,7 @@ class AttendanceRegisterView(ClassCoachMixin, View):
         return get_object_or_404(Session, pk=session_pk, assigned_class=self.assigned_class)
 
     def get(self, request, org_slug, pk, session_pk):
+        from documents.models import SignedWaiver, WaiverTemplate
         session = self._get_session(session_pk)
         enrolled = (
             ClassMember.objects.filter(assigned_class=self.assigned_class)
@@ -237,6 +238,21 @@ class AttendanceRegisterView(ClassCoachMixin, View):
             Attendance.objects.filter(session=session, present=True)
             .values_list('member_id', flat=True)
         )
+        # Members missing a required signed waiver
+        has_required_waivers = WaiverTemplate.objects.filter(
+            organisation=self.org, is_active=True, is_required=True
+        ).exists()
+        unsigned_waiver_ids = set()
+        if has_required_waivers:
+            member_ids = [cm.member.pk for cm in enrolled]
+            signed_ids = set(
+                SignedWaiver.objects.filter(
+                    member_id__in=member_ids,
+                    template__organisation=self.org,
+                    template__is_required=True,
+                ).values_list('member_id', flat=True)
+            )
+            unsigned_waiver_ids = set(member_ids) - signed_ids
         return render(request, 'classes/register.html', {
             'org': self.org,
             'org_membership': self.org_membership,
@@ -244,6 +260,7 @@ class AttendanceRegisterView(ClassCoachMixin, View):
             'session': session,
             'enrolled': enrolled,
             'present_ids': present_ids,
+            'unsigned_waiver_ids': unsigned_waiver_ids,
         })
 
     def post(self, request, org_slug, pk, session_pk):

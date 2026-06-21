@@ -77,6 +77,13 @@
     {% endif %}
 </div>
 
+{% if is_admin and unsigned_waivers_count %}
+<div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-2">
+    <i class="bi bi-file-earmark-x-fill"></i>
+    <span class="small"><strong>{{ unsigned_waivers_count }} member{{ unsigned_waivers_count|pluralize }}</strong> without a signed waiver — they should not train.</span>
+    <a href="{% url 'member_list' org_slug=org.slug %}?waiver=unsigned" class="btn btn-sm btn-danger ms-auto">View</a>
+</div>
+{% endif %}
 {% if is_admin and pending_applications %}
 <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-2">
     <i class="bi bi-person-plus-fill"></i>

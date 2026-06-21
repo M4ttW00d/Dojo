@@ -229,6 +229,11 @@
             </a>
         </li>
         <li>
+            <a href="{% url 'waiver_list' org_slug=org.slug %}" class="{% if url_name == 'waiver_list' %}active{% endif %}">
+                <i class="bi bi-file-earmark-text"></i> Waivers
+            </a>
+        </li>
+        <li>
             <a href="{% url 'org_audit_log' org_slug=org.slug %}" class="{% if url_name == 'org_audit_log' %}active{% endif %}">
                 <i class="bi bi-journal-check"></i> Audit log
             </a>

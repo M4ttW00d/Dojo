@@ -31,6 +31,16 @@ class MemberListView(OrgAdminMixin, ListView):
             qs = qs.filter(licence_expiry__lt=today)
         elif licence == 'expiring':
             qs = qs.filter(licence_expiry__lte=today + timedelta(days=30), licence_expiry__gte=today)
+        waiver = self.request.GET.get('waiver', '')
+        if waiver == 'unsigned':
+            from documents.models import SignedWaiver, WaiverTemplate
+            required = WaiverTemplate.objects.filter(
+                organisation=self.org, is_active=True, is_required=True
+            )
+            signed_ids = SignedWaiver.objects.filter(
+                template__in=required
+            ).values_list('member_id', flat=True)
+            qs = qs.exclude(pk__in=signed_ids)
         return qs
 
     def get_template_names(self):
@@ -133,6 +143,17 @@ class MemberDetailView(OrgAdminMixin, DetailView):
         today = date.today()
         context['today'] = today
         context['thirty_days'] = today + timedelta(days=30)
+        from documents.models import SignedWaiver, WaiverTemplate
+        context['signed_waivers'] = SignedWaiver.objects.filter(
+            member=self.object
+        ).select_related('template').order_by('-signed_at')
+        context['waiver_templates'] = WaiverTemplate.objects.filter(
+            organisation=self.org, is_active=True
+        )
+        signed_template_ids = set(context['signed_waivers'].values_list('template_id', flat=True))
+        context['missing_waivers'] = context['waiver_templates'].filter(
+            is_required=True
+        ).exclude(pk__in=signed_template_ids)
         return context
 
 
@@ -248,6 +269,28 @@ class ApproveApplicationView(OrgAdminMixin, View):
             )
         app.status = MemberApplication.Status.APPROVED
         app.save(update_fields=['status'])
+
+        # Generate signed waivers from application signature
+        if app.signature_data:
+            from documents.models import WaiverTemplate, SignedWaiver
+            from documents.pdf_utils import stamp_signature_on_pdf
+            from django.core.files.base import ContentFile
+            for template in self.org.waiver_templates.filter(is_active=True):
+                try:
+                    signed_pdf = stamp_signature_on_pdf(
+                        template.file, app.signature_data, app.name, app.submitted_at
+                    )
+                    sw = SignedWaiver(
+                        member=member, application=app, template=template,
+                        signer_name=app.name, signed_at=app.submitted_at,
+                    )
+                    sw.signed_pdf.save(
+                        f"{app.name}_{template.name}.pdf".replace(' ', '_'),
+                        ContentFile(signed_pdf.read()), save=True
+                    )
+                except Exception:
+                    pass  # Don't block approval if PDF stamping fails
+
         from .emails import send_welcome_email
         send_welcome_email(member)
         messages.success(request, f'{member.name} approved and added as a member.')

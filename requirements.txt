@@ -5,3 +5,5 @@ django-htmx
 django-auditlog
 stripe
 Pillow
+pypdf
+reportlab

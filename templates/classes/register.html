@@ -54,6 +54,11 @@
                                     <label class="form-check-label fw-semibold mb-0" for="m{{ cm.member.pk }}" style="cursor:pointer;">
                                         {{ cm.member.name }}
                                     </label>
+                                    {% if cm.member.pk in unsigned_waiver_ids %}
+                                    <span class="badge bg-danger ms-2" style="font-size:0.6rem;" title="No signed waiver on file — member should not train">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> No waiver
+                                    </span>
+                                    {% endif %}
                                 </td>
                                 <td class="text-end pe-3 py-3">
                                     <span class="present-badge {% if cm.member.pk in present_ids %}text-success{% else %}text-muted{% endif %} small">

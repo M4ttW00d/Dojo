@@ -386,6 +386,86 @@
             {% endif %}
         </div>
 
+        {# ── Signed waivers ── #}
+        {% if waiver_templates %}
+        <div class="card border-0 shadow-sm mb-3 {% if missing_waivers %}border-danger{% endif %}" {% if missing_waivers %}style="border-width:2px!important;"{% endif %}>
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 d-flex align-items-center gap-2">
+                    Waivers
+                    {% if missing_waivers %}
+                    <span class="badge bg-danger" style="font-size:0.65rem;">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Not signed — cannot train
+                    </span>
+                    {% else %}
+                    <span class="badge bg-success-subtle text-success" style="font-size:0.65rem;">All signed</span>
+                    {% endif %}
+                </h6>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#offlineWaiverForm">
+                    <i class="bi bi-upload me-1"></i> Upload offline
+                </button>
+            </div>
+            {% if missing_waivers %}
+            <div class="collapse" id="offlineWaiverForm">
+                <div class="card-body border-bottom bg-light">
+                    <p class="small text-muted mb-2">Upload a scanned paper copy of a signed waiver.</p>
+                    <form method="post" action="{% url 'signed_waiver_offline' org_slug=org.slug member_pk=member.pk %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <label class="form-label small fw-semibold">Waiver</label>
+                                <select name="template_id" class="form-select form-select-sm">
+                                    {% for w in missing_waivers %}
+                                    <option value="{{ w.pk }}">{{ w.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label small fw-semibold">Scanned PDF</label>
+                                <input type="file" name="file" class="form-control form-control-sm" accept=".pdf" required>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-sm btn-dark">Save offline signature</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            {% if signed_waivers %}
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for sw in signed_waivers %}
+                        <tr>
+                            <td class="ps-3 py-2 small fw-semibold">{{ sw.template.name }}</td>
+                            <td class="py-2 small text-muted">
+                                {{ sw.signed_at|date:"d M Y" }}
+                                {% if sw.offline %}<span class="badge bg-secondary-subtle text-secondary ms-1">Paper</span>{% endif %}
+                            </td>
+                            <td class="py-2 text-end pe-3">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="{% url 'signed_waiver_download' org_slug=org.slug member_pk=member.pk pk=sw.pk %}"
+                                       class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i></a>
+                                    <form method="post" action="{% url 'signed_waiver_delete' org_slug=org.slug member_pk=member.pk pk=sw.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Remove this signed waiver?')"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body">
+                <p class="text-muted small mb-0">No signed waivers on file.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">Documents</h6>
