@@ -235,18 +235,18 @@ Coach (handled via OrganisationMember and ClassCoach, not a separate model)
 
 ## Project Structure (Current State)
 
-The project has a working Django + MySQL stack running in Docker, with all core models implemented and the Django admin functional.
+The project has a working Django + MySQL stack running in Docker with a full admin UI.
 
 ### Infrastructure
 
 - GitHub repo: public, AGPL-3.0 licenced, at `github.com/M4ttW00d/Dojo`
-- 26 GitHub issues created covering the full roadmap (issues #1–#9 closed, #10–#26 open)
+- GitHub issues cover the full roadmap
 - `Dockerfile` — `python:3.12-slim`, installs MySQL client libs, copies and installs dependencies
 - `docker-compose.yml` — two services: `db` (MySQL 8.0) and `web` (Django). MySQL data persisted via named volume.
 - `.env` — created locally, not committed. `.env.example` committed with variable names.
 - `.gitignore` — covers `.env`, `__pycache__/`, `*.pyc`, `.DS_Store`, `venv/`, `.idea/`, `staticfiles/`
-- `requirements.txt` — `django`, `mysqlclient`, `python-dotenv`
-- `docker compose up` confirmed working. Admin accessible at `http://localhost:8000/admin/`. Superuser created (username: `admin`).
+- `requirements.txt` — `django`, `mysqlclient`, `python-dotenv`, `django-htmx`, `django-auditlog`
+- `docker compose up -d` to start. App at `http://localhost:8000`. Superuser: `admin` / `admin`.
 
 ### settings.py
 
@@ -257,46 +257,89 @@ Fully configured:
 - `ALLOWED_HOSTS = ['*']` for development
 - `LANGUAGE_CODE = 'en-gb'`, `TIME_ZONE = 'Europe/London'`
 - `DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'`
+- `django_htmx` and `auditlog` in `INSTALLED_APPS`
+- `HtmxMiddleware` and `AuditlogMiddleware` in `MIDDLEWARE`
 
 ### Django Apps and Models
 
-All apps are in `INSTALLED_APPS`. All models are migrated against the running MySQL instance.
+All apps are in `INSTALLED_APPS`. All models are migrated.
 
-| App | Models | Migrated | Admin |
+| App | Models | Migrated | Views built |
 |---|---|---|---|
-| `organisations` | Organisation, OrganisationMember | ✅ | ✅ |
-| `members` | Member, Guardian, CustomField | ✅ | ✅ |
-| `classes` | Class, ClassCoach, ClassMember, Session, Attendance | ✅ | ✅ |
-| `progression` | ProgressionStage, MemberProgression | ✅ | ✅ |
-| `billing` | Invoice, Payment | ✅ | ✅ |
-| `documents` | — | ❌ not created yet | ❌ |
+| `organisations` | Organisation, OrganisationMember | ✅ | ✅ Dashboard, staff management, audit log, custom fields settings |
+| `members` | Member, Guardian, CustomField | ✅ | ✅ List (HTMX search), add, detail, edit, archive |
+| `classes` | Class, ClassCoach, ClassMember, Session, Attendance | ✅ | ✅ List, add, detail, edit, enrol/unenrol, session generation, attendance register |
+| `progression` | ProgressionStage, MemberProgression | ✅ | ❌ not yet |
+| `billing` | Invoice, Payment | ✅ | ❌ not yet |
+| `documents` | — | ❌ not created | ❌ not yet |
 
-**Admin notes:** Guardian is an inline on MemberAdmin (not top-level). ClassCoach and ClassMember are inlines on ClassAdmin. Attendance is an inline on SessionAdmin. Payment is an inline on InvoiceAdmin.
+### Permission Layer
+
+`dojo/mixins.py` contains:
+- `OrgMixin` — login required, resolves `self.org` and `self.org_membership` from URL `org_slug`
+- `OrgAdminMixin` — extends OrgMixin, enforces org_admin role (superusers bypass)
+- `ClassCoachMixin` — extends OrgMixin, enforces coach assignment to specific class
+
+### URL Structure
+
+```
+/                          → root_redirect (sends to org dashboard)
+/admin/                    → Django admin
+/login/, /logout/
+/org/<slug>/               → org dashboard
+/org/<slug>/members/       → member list
+/org/<slug>/members/add/
+/org/<slug>/members/<pk>/
+/org/<slug>/members/<pk>/edit/
+/org/<slug>/members/<pk>/archive/
+/org/<slug>/classes/
+/org/<slug>/classes/add/
+/org/<slug>/classes/<pk>/
+/org/<slug>/classes/<pk>/edit/
+/org/<slug>/classes/<pk>/enrol/
+/org/<slug>/classes/<pk>/unenrol/<member_pk>/
+/org/<slug>/classes/<pk>/generate-sessions/
+/org/<slug>/classes/<pk>/sessions/<session_pk>/register/
+/org/<slug>/classes/<pk>/coaches/add/
+/org/<slug>/classes/<pk>/coaches/<coach_pk>/remove/
+/org/<slug>/staff/
+/org/<slug>/audit/
+/org/<slug>/settings/fields/
+```
+
+### Templates
+
+Base layout: `templates/org/base.html` — dark sidebar, Bootstrap 5.3, Bootstrap Icons, HTMX.
+
+All templates extend `org/base.html`. Partials in `templates/members/partials/` for HTMX responses.
+
+### Audit Logging
+
+`django-auditlog` installed. All models registered. Every create/update/delete is logged with actor, timestamp, and field diffs. Viewable at `/org/<slug>/audit/`.
 
 ### What Has NOT Been Done Yet
 
-- `Session` model needs updating: add `is_cancelled` and `is_extra` boolean fields; `Class.schedule` needs structured recurrence data instead of free text
+- Billing views (Invoice, Payment) — models exist, no UI
+- Progression views — models exist, no UI
+- Member portal (`/p/<token>/`) — token field exists on Member, no view
+- Email sending
+- Stripe integration
+- DocuSeal integration
+- S3/R2 file storage
 - `documents` app not yet created
-- No views, URLs, or templates (beyond Django admin)
-- No permission middleware (org-scoping, role enforcement, coach silo)
-- No member portal (`/p/<token>/`)
-- No email sending
-- No Stripe integration
-- No DocuSeal integration
-- No S3/R2 file storage
-- HTMX not yet installed or integrated
+- Coach-facing views (coaches can log in but currently see nothing useful)
 
 ---
 
 ## Suggested Next Steps (In Order)
 
-1. Update `Session` model: add `is_cancelled` and `is_extra` fields. Update `Class.schedule` to store structured recurring schedule (days + time). Run migrations.
-2. Build permission middleware — org-scoping and role enforcement on all views, coach silo enforcement (issue #13)
-3. Build base templates and HTMX integration — base layout, nav, HTMX wired up (issue #12)
-4. Build member management views — list, add, edit, archive (issue #14)
-5. Build class management views — list, add, edit, assign coaches, enrol members (issue #15)
-6. Build attendance recording UI — session register with HTMX toggles (issue #16)
-7. Continue with billing views, member portal, email, Stripe, documents
+1. **Billing** — invoice list (org-wide and per-member), create invoice, mark paid, basic payment recording
+2. **Email** — SMTP config, send invoice email, send welcome email on member create
+3. **Progression** — define stages per org, record promotions per member, display on member profile
+4. **Member portal** — `/p/<token>/` page showing their info, upcoming sessions, invoices
+5. **Coach views** — coaches log in and see their assigned classes and can take the register
+6. **Stripe** — connect Stripe account per org, hosted payment links on invoices
+7. **Documents** — DocuSeal integration, S3 storage
 
 ---
 

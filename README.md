@@ -39,28 +39,50 @@ Dojo is sport and activity agnostic. Whether you run a judo club, a dance school
 
 ## Getting Started
 
-> Full self-hosting documentation coming soon.
+Dojo runs in Docker. You'll need [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed.
 
 ```bash
-git clone https://github.com/yourusername/dojo.git
+git clone https://github.com/M4ttW00d/dojo.git
 cd dojo
-pip install -r requirements.txt
+
+# Copy the example env file and fill in your values
 cp .env.example .env
-python manage.py migrate
-python manage.py runserver
+
+# Start the database and web server
+docker compose up -d
+
+# Run database migrations
+docker compose exec web python manage.py migrate
+
+# Create your admin account
+docker compose exec web python manage.py createsuperuser
+```
+
+Then open [http://localhost:8000/admin/](http://localhost:8000/admin/) to create your first organisation, then head to [http://localhost:8000/](http://localhost:8000/) to log in.
+
+**Stopping Dojo:**
+
+```bash
+docker compose down
 ```
 
 ---
 
 ## Roadmap
 
-- [ ] Core multi-tenant architecture
-- [ ] Member and class management
-- [ ] Attendance tracking
-- [ ] Invoicing and Stripe integration
-- [ ] Parent tokenised portal
+- [x] Core multi-tenant architecture
+- [x] Member management (add, edit, archive, guardian support, emergency contacts)
+- [x] Class management with schedule builder
+- [x] Attendance register
+- [x] Staff and coach management
+- [x] Custom fields per organisation
+- [x] Audit logging
+- [ ] Billing and invoicing
+- [ ] Stripe payment integration
+- [ ] Member tokenised portal
+- [ ] Progression / grading system
 - [ ] Document signing and storage
-- [ ] Custom fields and progression system
+- [ ] Email notifications
 - [ ] SaaS mode (Dojo Cloud)
 
 ---
