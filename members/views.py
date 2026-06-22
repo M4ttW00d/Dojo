@@ -220,18 +220,11 @@ class MemberDetailView(OrgAdminMixin, DetailView):
             organisation=self.org
         ).prefetch_related('stages')
         context['current_grade'] = context['progressions'].first()
-        from .models import CustomField, MemberNote
+        from .models import MemberNote
         context['notes'] = MemberNote.objects.filter(member=self.object).select_related('author')
-        from .models import CustomField
-        values = self.object.custom_field_values or {}
-        context['custom_fields'] = [
-            {
-                'field': cf,
-                'value': values.get(str(cf.pk), ''),
-                'is_bool': cf.field_type == CustomField.FieldType.BOOLEAN,
-            }
-            for cf in CustomField.objects.filter(organisation=self.org)
-        ]
+        context['custom_fields'] = build_custom_field_widgets(
+            self.org, initial_values=self.object.custom_field_values
+        )
         from datetime import date, timedelta
         today = date.today()
         context['today'] = today
@@ -596,6 +589,15 @@ class SendWelcomeEmailView(OrgAdminMixin, View):
         except Exception as e:
             messages.error(request, f'Email failed: {e}')
         return redirect('member_detail', org_slug=self.org.slug, pk=member.pk)
+
+
+class MemberCustomFieldsView(OrgAdminMixin, View):
+    def post(self, request, org_slug, pk):
+        member = get_object_or_404(Member, pk=pk, organisation=self.org)
+        member.custom_field_values = extract_custom_field_values(self.org, request.POST)
+        member.save(update_fields=['custom_field_values'])
+        messages.success(request, 'Custom fields updated.')
+        return redirect('member_detail', org_slug=self.org.slug, pk=pk)
 
 
 class FormerMembersView(OrgAdminMixin, View):
