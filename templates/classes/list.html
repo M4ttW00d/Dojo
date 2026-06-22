@@ -1,6 +1,6 @@
 {% extends 'org/base.html' %}
 
-{% block title %}Classes — {{ org.name }}{% endblock %}
+{% block title %}Classes{% endblock %}
 {% block page_title %}Classes{% endblock %}
 {% block page_subtitle %}{{ classes|length }} class{{ classes|length|pluralize:"es" }}{% endblock %}
 
@@ -14,6 +14,7 @@
 {% if classes %}
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
+        <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
             <thead class="table-light">
                 <tr>
@@ -41,6 +42,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 {% else %}

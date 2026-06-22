@@ -1,6 +1,6 @@
 {% extends 'org/base.html' %}
 
-{% block title %}Staff — {{ org.name }}{% endblock %}
+{% block title %}Staff{% endblock %}
 {% block page_title %}Staff{% endblock %}
 {% block page_subtitle %}Coaches and administrators for {{ org.name }}{% endblock %}
 
@@ -58,6 +58,7 @@
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
         {% if staff %}
+        <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
             <thead class="table-light">
                 <tr>
@@ -187,6 +188,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
         {% else %}
         <div class="text-center text-muted py-5">No staff members yet.</div>
         {% endif %}

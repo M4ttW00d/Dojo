@@ -1,6 +1,6 @@
 {% extends 'org/base.html' %}
 
-{% block title %}Progression — {{ org.name }}{% endblock %}
+{% block title %}Progression{% endblock %}
 {% block page_title %}Progression{% endblock %}
 {% block page_subtitle %}Define the grading systems and stages members can achieve{% endblock %}
 
@@ -68,6 +68,7 @@
 
     {% if system.stages.all %}
     <div class="card-body p-0">
+        <div class="table-responsive">
         <table class="table table-sm table-hover mb-0 align-middle">
             <thead class="table-light">
                 <tr>
@@ -150,6 +151,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
     {% else %}
     <div class="card-body">

@@ -1,5 +1,5 @@
 {% extends 'org/base.html' %}
-{% block title %}Waiver templates — {{ org.name }}{% endblock %}
+{% block title %}Waivers{% endblock %}
 {% block page_title %}Waiver templates{% endblock %}
 {% block page_subtitle %}PDFs that prospective members must sign when registering interest{% endblock %}
 
@@ -10,6 +10,7 @@
         <div class="card mb-4">
             <div class="card-header bg-white py-3"><h6 class="mb-0">Active templates</h6></div>
             <div class="card-body p-0">
+                <div class="table-responsive">
                 <table class="table table-hover mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
@@ -54,6 +55,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
         {% else %}

@@ -1,6 +1,6 @@
 {% extends 'org/base.html' %}
 
-{% block title %}Announcements — {{ org.name }}{% endblock %}
+{% block title %}Announcements{% endblock %}
 {% block page_title %}Announcements{% endblock %}
 
 {% block main_content %}
@@ -54,6 +54,7 @@
             </div>
             {% if announcements %}
             <div class="card-body p-0">
+                <div class="table-responsive">
                 <table class="table table-sm mb-0">
                     <thead class="table-light">
                         <tr>
@@ -74,6 +75,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
             {% else %}
             <div class="card-body text-center py-5">

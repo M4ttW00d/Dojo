@@ -124,7 +124,8 @@
     z-index: 50;
     gap: 12px;
 }
-.dojo-topbar h4 { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--dojo-text); flex: 1; }
+.dojo-page-title { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--dojo-text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dojo-topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
 .dojo-content { padding: 28px; flex: 1; }
 
 /* ── Mobile ──────────────────────────────────────── */
@@ -132,10 +133,29 @@
     .dojo-sidebar { transform: translateX(-100%); transition: transform .25s; }
     .dojo-sidebar.open { transform: translateX(0); }
     .dojo-main { margin-left: 0; }
-    .dojo-topbar { padding: 0 16px; }
-    .dojo-content { padding: 16px; }
+    .dojo-topbar {
+        height: auto;
+        min-height: 56px;
+        padding: 8px 14px;
+        flex-wrap: wrap;
+        row-gap: 0;
+    }
+    .dojo-page-title { font-size: 0.95rem; }
+    .dojo-topbar-actions {
+        order: 10;
+        width: 100%;
+        margin-left: 0;
+        padding: 6px 0 8px;
+        border-top: 1px solid var(--dojo-border);
+        margin-top: 4px;
+    }
+    .dojo-topbar-actions:empty { display: none; border: none; padding: 0; margin: 0; }
+    .dojo-content { padding: 14px; }
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 99; }
     .sidebar-overlay.open { display: block; }
+    /* Catch-all: prevent any card body content overflowing on small screens */
+    .card { overflow: hidden; }
+    .card-body, .card-header, .card-footer { min-width: 0; }
 }
 </style>
 
@@ -300,12 +320,12 @@
 
 <div class="dojo-main">
     <header class="dojo-topbar">
-        <button class="btn btn-sm d-md-none me-2 p-1" style="background:none;border:none;color:var(--dojo-muted);" onclick="openSidebar()">
+        <button class="btn btn-sm d-md-none me-2 p-1" style="background:none;border:none;color:var(--dojo-muted);flex-shrink:0;" onclick="openSidebar()">
             <i class="bi bi-list" style="font-size:1.4rem;"></i>
         </button>
-        <h4>{% block page_title %}{% endblock %}</h4>
-        <p class="text-muted mb-0 small d-none d-sm-block">{% block page_subtitle %}{% endblock %}</p>
-        <div class="ms-auto d-flex align-items-center gap-2">{% block page_actions %}{% endblock %}</div>
+        <h4 class="dojo-page-title">{% block page_title %}{% endblock %}</h4>
+        <p class="text-muted mb-0 small d-none d-sm-block flex-shrink-0">{% block page_subtitle %}{% endblock %}</p>
+        <div class="dojo-topbar-actions">{% block page_actions %}{% endblock %}</div>
     </header>
 
     <div class="dojo-content">

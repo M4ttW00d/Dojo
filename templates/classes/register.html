@@ -1,6 +1,6 @@
 {% extends 'org/base.html' %}
 
-{% block title %}Register — {{ session.date|date:"d M Y" }} — {{ org.name }}{% endblock %}
+{% block title %}Register{% endblock %}
 {% block page_title %}Register{% endblock %}
 {% block page_subtitle %}{{ cls.name }} &mdash; {{ session.date|date:"l d M Y" }}{% endblock %}
 
@@ -39,6 +39,7 @@
 
                 {% if enrolled %}
                 <div class="card-body p-0">
+                    <div class="table-responsive">
                     <table class="table table-hover mb-0 align-middle">
                         <tbody>
                             {% for cm in enrolled %}
@@ -88,6 +89,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    </div>
                 </div>
                 {% else %}
                 <div class="card-body">

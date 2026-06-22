@@ -198,6 +198,7 @@
                 <h6 class="mb-0">Guardians</h6>
             </div>
             <div class="card-body p-0">
+                <div class="table-responsive">
                 <table class="table table-sm mb-0">
                     <thead class="table-light">
                         <tr>
@@ -222,6 +223,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
         {% endif %}
@@ -287,6 +289,7 @@
 
             {% if progressions %}
             <div class="card-body p-0">
+                <div class="table-responsive">
                 <table class="table table-sm mb-0">
                     <tbody>
                         {% for prog in progressions %}
@@ -312,6 +315,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
             {% else %}
             <div class="card-body">
@@ -424,6 +428,7 @@
             </div>
             {% if invoices %}
             <div class="card-body p-0">
+                <div class="table-responsive">
                 <table class="table table-sm mb-0">
                     <tbody>
                         {% for invoice in invoices %}
@@ -445,6 +450,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
             {% else %}
             <div class="card-body">
@@ -540,6 +546,7 @@
             {% endif %}
             {% if signed_waivers %}
             <div class="card-body p-0">
+                <div class="table-responsive">
                 <table class="table table-sm mb-0">
                     <tbody>
                         {% for sw in signed_waivers %}
@@ -564,6 +571,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
             {% else %}
             <div class="card-body">
@@ -612,6 +620,7 @@
             </div>
             {% if member.documents.all %}
             <div class="card-body p-0">
+                <div class="table-responsive">
                 <table class="table table-sm mb-0">
                     <tbody>
                         {% for doc in member.documents.all %}
@@ -638,6 +647,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
             {% else %}
             <div class="card-body">

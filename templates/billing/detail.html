@@ -1,6 +1,6 @@
 {% extends 'org/base.html' %}
 
-{% block title %}Invoice — {{ invoice.member.name }} — {{ org.name }}{% endblock %}
+{% block title %}Invoice{% endblock %}
 {% block page_title %}Invoice{% endblock %}
 {% block page_subtitle %}{{ invoice.member.name }} &mdash; {{ invoice.period }}{% endblock %}
 
@@ -145,6 +145,7 @@
 
             {% if payments %}
             <div class="card-body p-0">
+                <div class="table-responsive">
                 <table class="table table-sm mb-0">
                     <thead class="table-light">
                         <tr>
@@ -165,6 +166,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
             {% else %}
             <div class="card-body">

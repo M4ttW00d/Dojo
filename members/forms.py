@@ -27,6 +27,7 @@ def build_custom_field_widgets(org, data=None, initial_values=None):
         rendered.append({
             'field': cf,
             'key': key,
+            'value': current,
             'html': widget.render(key, current if cf.field_type != CustomField.FieldType.BOOLEAN else bool(current)),
             'is_bool': cf.field_type == CustomField.FieldType.BOOLEAN,
             'checked': bool(current),

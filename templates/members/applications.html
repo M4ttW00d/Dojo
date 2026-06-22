@@ -1,6 +1,6 @@
 {% extends 'org/base.html' %}
 
-{% block title %}Applications — {{ org.name }}{% endblock %}
+{% block title %}Applications{% endblock %}
 {% block page_title %}Membership applications{% endblock %}
 
 {% block page_actions %}
@@ -27,6 +27,7 @@
 <div class="card border-0 shadow-sm">
     {% if applications %}
     <div class="card-body p-0">
+        <div class="table-responsive">
         <table class="table table-sm mb-0">
             <thead class="table-light">
                 <tr>
@@ -79,6 +80,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
     {% else %}
     <div class="card-body text-center py-5">

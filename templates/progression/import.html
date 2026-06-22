@@ -1,6 +1,6 @@
 {% extends 'org/base.html' %}
 
-{% block title %}Import Progression — {{ org.name }}{% endblock %}
+{% block title %}Import progression{% endblock %}
 {% block page_title %}Import progression history{% endblock %}
 {% block page_subtitle %}Bulk-load historical grades from a CSV file{% endblock %}
 
@@ -53,6 +53,7 @@
             </div>
             <div class="card-body small">
                 <p>Required columns (exact header names):</p>
+                <div class="table-responsive">
                 <table class="table table-sm table-bordered small mb-3">
                     <thead class="table-light">
                         <tr>
@@ -68,6 +69,7 @@
                         <tr><td><code>notes</code> <span class="text-muted">(optional)</span></td><td>Spring grading</td></tr>
                     </tbody>
                 </table>
+                </div>
                 <p class="text-muted mb-0">Member names must match exactly (case-insensitive). System and stage names must match what you've defined in <a href="{% url 'progression_settings' org_slug=org.slug %}">Progression settings</a>. You can import multiple rows per member to capture their full history.</p>
             </div>
         </div>
