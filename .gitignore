@@ -37,3 +37,7 @@ Thumbs.db
 # Claude Code
 claude resume
 claude *
+
+# graphify
+graphify-out/
+GRAPH_REPORT.md
